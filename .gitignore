@@ -1,0 +1,66 @@
+# Visual Studio and build outputs
+.vs/
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider/JetBrains
+.idea/
+*.sln.iml
+
+# Dotnet
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet
+*.nupkg
+.nuget/
+packages/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Secrets
+appsettings.*.json
+secrets.json
+secrets.*.json
+.env
+.env.*
+
+# Certificates
+*.pfx
+
+# Logs
+*.log
+
+# Test results
+TestResults/
+
+# Local database files
+*.mdf
+*.ldf
+
+# VS Code
+.vscode/
+
+# Generated files
+*.cache
+
+# Any local machine-specific files
+*.local
+
+# Docker
+docker-compose.override.yml
+
+# Ignore compiled executables
+*.exe
+
+# Don't ignore GitHub Copilot temp files
+!.copilot/
