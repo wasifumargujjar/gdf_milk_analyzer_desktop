@@ -1,6 +1,6 @@
 ﻿namespace MilkAnalyzerTest
 {
-    partial class Form1
+    partial class MainForm
     {
         private System.ComponentModel.IContainer components = null;
         private System.Windows.Forms.TextBox txtName;
@@ -158,7 +158,7 @@
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(9F, 23F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(600, 320);
+            ClientSize = new System.Drawing.Size(1000, 700);
             Controls.Add(lblName);
             Controls.Add(lblNIC);
             Controls.Add(lblPhone);
@@ -172,7 +172,7 @@
             Controls.Add(txtWhatsapp);
             Controls.Add(txtAddress);
             Controls.Add(btnStartTest);
-            Name = "Form1";
+            Name = "MainForm";
             Text = "Milk Test";
             WindowState = System.Windows.Forms.FormWindowState.Maximized;
             ResumeLayout(false);

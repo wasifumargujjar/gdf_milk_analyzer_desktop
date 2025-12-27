@@ -11,7 +11,7 @@ using Microsoft.Data.SqlClient;
 
 namespace MilkAnalyzerTest
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         private SerialPort _serialPort;
         private readonly StringBuilder _buffer = new();
@@ -20,7 +20,7 @@ namespace MilkAnalyzerTest
         private int? _currentProfileId;
         private DataGridView _grid;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
             InitializeSerial();
@@ -32,29 +32,38 @@ namespace MilkAnalyzerTest
         {
             _grid = new DataGridView
             {
-                Left = 300,
-                Top = 12,
-                Width = 360,
-                Height = 360,
+                Dock = DockStyle.Bottom,
+                Height = 250,
                 ReadOnly = true,
                 AllowUserToAddRows = false,
-                ColumnCount = 2
+                ColumnCount = 2,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
             };
             _grid.Columns[0].Name = "Parameter";
             _grid.Columns[1].Name = "Value";
             Controls.Add(_grid);
 
-            // PDF button
+            // PDF button (position it next to the designer Start Test button)
             _pdfButton = new Button
             {
-                Left = 300,
-                Top = 380,
                 Width = 120,
                 Height = 30,
                 Text = "Generate PDF"
             };
+            // If the designer button exists, position relative to it; otherwise use defaults.
+            try
+            {
+                _pdfButton.Left = btnStartTest.Left + btnStartTest.Width + 10;
+                _pdfButton.Top = btnStartTest.Top;
+            }
+            catch
+            {
+                _pdfButton.Left = 300;
+                _pdfButton.Top = 12;
+            }
             _pdfButton.Click += PdfButton_Click;
             Controls.Add(_pdfButton);
+            _pdfButton.BringToFront();
         }
 
         private void AddTestButton()
