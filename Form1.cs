@@ -38,6 +38,11 @@ namespace MilkAnalyzerTest
             AddTopButtons();
             // Load analyzer parameters into parameter grids
             _ = LoadAnalyzerParametersAsync();
+
+            // Attach Enter key handlers to perform profile lookup
+            txtPhone.KeyDown += LookupField_KeyDown;
+            txtNIC.KeyDown += LookupField_KeyDown;
+            txtEmail.KeyDown += LookupField_KeyDown;
         }
 
         private void AddTopButtons()
@@ -692,6 +697,86 @@ namespace MilkAnalyzerTest
                 }
                 catch { }
             }
+        }
+
+        private void LookupField_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Enter) return;
+            e.SuppressKeyPress = true;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    string? phone = null, nic = null, email = null;
+                    if (sender == txtPhone) phone = txtPhone.Text?.Trim();
+                    else if (sender == txtNIC) nic = txtNIC.Text?.Trim();
+                    else if (sender == txtEmail) email = txtEmail.Text?.Trim();
+
+                    await TryAutoFillProfileAsync(phone, nic, email);
+                }
+                catch (Exception ex)
+                {
+                    try { BeginInvoke((Action)(() => MessageBox.Show($"Lookup failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error))); } catch { }
+                }
+            });
+        }
+
+        private async Task TryAutoFillProfileAsync(string? phoneNumber, string? cnicNumber, string? email)
+        {
+            phoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
+            cnicNumber = string.IsNullOrWhiteSpace(cnicNumber) ? null : cnicNumber.Trim();
+            email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
+
+            if (phoneNumber == null && cnicNumber == null && email == null) return;
+
+            using var http = new HttpClient();
+            // Ensure base address ends with slash if Settings.ApiBaseUrl provided
+            var baseUrl = MilkAnalyzerTest.Config.Settings.ApiBaseUrl ?? string.Empty;
+            if (!baseUrl.EndsWith("/")) baseUrl += '/';
+            http.BaseAddress = new Uri(baseUrl);
+
+            // Build query params - include only the one provided (prefer the one that triggered)
+            var qs = new System.Text.StringBuilder();
+            if (phoneNumber != null) qs.Append($"phoneNumber={Uri.EscapeDataString(phoneNumber)}");
+            else if (cnicNumber != null) qs.Append($"cnicNumber={Uri.EscapeDataString(cnicNumber)}");
+            else if (email != null) qs.Append($"email={Uri.EscapeDataString(email)}");
+
+            var url = $"users/getProfileInfo?{qs}";
+
+            using var resp = await http.GetAsync(url);
+            if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // no profile found - do nothing
+                return;
+            }
+
+            resp.EnsureSuccessStatusCode();
+            var body = await resp.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            // Map fields safely
+            int id = 0;
+            if (root.TryGetProperty("Id", out var idElem) && idElem.ValueKind == JsonValueKind.Number) id = idElem.GetInt32();
+            var fullName = root.TryGetProperty("FullName", out var fn) ? fn.GetString() : (root.TryGetProperty("UserName", out var un) ? un.GetString() : null);
+            var respEmail = root.TryGetProperty("Email", out var em) ? em.GetString() : null;
+            var respPhone = root.TryGetProperty("PhoneNumber", out var pn) ? pn.GetString() : null;
+            var respCnic = root.TryGetProperty("CnicNumber", out var cn) ? cn.GetString() : (root.TryGetProperty("CNICNumber", out var cn2) ? cn2.GetString() : null);
+
+            // Update UI on UI thread
+            BeginInvoke((Action)(() =>
+            {
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(fullName)) txtName.Text = fullName;
+                    if (!string.IsNullOrWhiteSpace(respCnic)) txtNIC.Text = respCnic;
+                    if (!string.IsNullOrWhiteSpace(respPhone)) txtPhone.Text = respPhone;
+                    if (!string.IsNullOrWhiteSpace(respEmail)) txtEmail.Text = respEmail;
+                    if (id != 0) _currentProfileId = id;
+                }
+                catch { }
+            }));
         }
     }
 }
