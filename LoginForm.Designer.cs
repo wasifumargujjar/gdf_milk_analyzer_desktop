@@ -29,53 +29,64 @@ namespace MilkAnalyzerTest
             // 
             // lblUsername
             // 
-            lblUsername.Location = new System.Drawing.Point(12, 15);
+            lblUsername.Location = new System.Drawing.Point(11, 10);
             lblUsername.Name = "lblUsername";
-            lblUsername.Size = new System.Drawing.Size(80, 23);
+            lblUsername.Size = new System.Drawing.Size(71, 16);
+            lblUsername.TabIndex = 0;
             lblUsername.Text = "Username:";
             // 
             // lblPassword
             // 
-            lblPassword.Location = new System.Drawing.Point(12, 55);
+            lblPassword.Location = new System.Drawing.Point(11, 38);
             lblPassword.Name = "lblPassword";
-            lblPassword.Size = new System.Drawing.Size(80, 23);
+            lblPassword.Size = new System.Drawing.Size(71, 16);
+            lblPassword.TabIndex = 1;
             lblPassword.Text = "Password:";
             // 
             // txtUsername
             // 
-            txtUsername.Location = new System.Drawing.Point(100, 12);
+            txtUsername.Location = new System.Drawing.Point(89, 8);
+            txtUsername.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             txtUsername.Name = "txtUsername";
-            txtUsername.Size = new System.Drawing.Size(220, 27);
+            txtUsername.Size = new System.Drawing.Size(196, 22);
+            txtUsername.TabIndex = 2;
+            txtUsername.Text = "ali@milkanalyzer.com";
             // 
             // txtPassword
             // 
-            txtPassword.Location = new System.Drawing.Point(100, 52);
+            txtPassword.Location = new System.Drawing.Point(89, 36);
+            txtPassword.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             txtPassword.Name = "txtPassword";
-            txtPassword.Size = new System.Drawing.Size(220, 27);
+            txtPassword.Size = new System.Drawing.Size(196, 22);
+            txtPassword.TabIndex = 3;
+            txtPassword.Text = "Ali123!";
             txtPassword.UseSystemPasswordChar = true;
             // 
             // btnLogin
             // 
-            btnLogin.Location = new System.Drawing.Point(100, 95);
+            btnLogin.Location = new System.Drawing.Point(89, 66);
+            btnLogin.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             btnLogin.Name = "btnLogin";
-            btnLogin.Size = new System.Drawing.Size(100, 30);
+            btnLogin.Size = new System.Drawing.Size(89, 21);
+            btnLogin.TabIndex = 4;
             btnLogin.Text = "Login";
             btnLogin.UseVisualStyleBackColor = true;
             btnLogin.Click += BtnLogin_Click;
             // 
             // LoginForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(9F, 23F);
+            AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(340, 140);
+            ClientSize = new System.Drawing.Size(302, 97);
             Controls.Add(lblUsername);
             Controls.Add(lblPassword);
             Controls.Add(txtUsername);
             Controls.Add(txtPassword);
             Controls.Add(btnLogin);
+            Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             Name = "LoginForm";
-            Text = "Login";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "Login";
             ResumeLayout(false);
             PerformLayout();
         }

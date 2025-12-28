@@ -16,6 +16,7 @@
         private System.Windows.Forms.Label lblAddress;
         private System.Windows.Forms.TextBox txtEmail;
         private System.Windows.Forms.Label lblEmail;
+        private System.Windows.Forms.Label lblLocation;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -51,6 +52,7 @@
             txtWhatsapp = new System.Windows.Forms.TextBox();
             txtAddress = new System.Windows.Forms.TextBox();
             btnStartTest = new System.Windows.Forms.Button();
+            lblLocation = new System.Windows.Forms.Label();
             SuspendLayout();
             // 
             // lblName
@@ -154,6 +156,14 @@
             btnStartTest.UseVisualStyleBackColor = true;
             btnStartTest.Click += BtnStartTest_Click;
             // 
+            // lblLocation
+            // 
+            lblLocation.AutoSize = true;
+            lblLocation.Name = "lblLocation";
+            lblLocation.Text = "Location: fetching...";
+            lblLocation.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            lblLocation.Location = new System.Drawing.Point(800, 12);
+            // 
             // Form1
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(9F, 23F);
@@ -171,6 +181,7 @@
             Controls.Add(txtEmail);
             Controls.Add(txtWhatsapp);
             Controls.Add(txtAddress);
+            Controls.Add(lblLocation);
             Controls.Add(btnStartTest);
             Name = "MainForm";
             Text = "Milk Test";

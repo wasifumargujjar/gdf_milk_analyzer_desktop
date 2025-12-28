@@ -8,6 +8,9 @@ using MilkAnalyzerTest.DataAccess;
 using MilkAnalyzerTest.Services;
 using MilkAnalyzerTest.Tests;
 using Microsoft.Data.SqlClient;
+using System.Net.Http;
+using System.Text.Json;
+using System.Device.Location;
 
 namespace MilkAnalyzerTest
 {
@@ -19,6 +22,12 @@ namespace MilkAnalyzerTest
         private Button _pdfButton;
         private int? _currentProfileId;
         private DataGridView _grid;
+        private DataGridView _gridParams;
+        private DataGridView _gridAdulteration;
+        private Button _btnNewTest;
+        private Button _btnPortToggle;
+        private Button _btnSetLocation;
+        private SplitContainer _bottomSplit;
 
         public MainForm()
         {
@@ -26,22 +35,122 @@ namespace MilkAnalyzerTest
             InitializeSerial();
             AddTestButton();
             AddResultsGrid();
+            AddTopButtons();
+            // Load analyzer parameters into parameter grids
+            _ = LoadAnalyzerParametersAsync();
+        }
+
+        private void AddTopButtons()
+        {
+            // New Test button at top-left
+            _btnNewTest = new Button
+            {
+                Text = "New Test",
+                Left = 140,
+                Top = 10,
+                Width = 100,
+                Height = 30
+            };
+            _btnNewTest.Click += (s, e) =>
+            {
+                // Clear values column in parameter grids
+                ClearParameterValues();
+            };
+            Controls.Add(_btnNewTest);
+            _btnNewTest.BringToFront();
+
+            // Port toggle button at top-right (placed before location label)
+            _btnPortToggle = new Button
+            {
+                Width = 80,
+                Height = 24,
+                Top = 8,
+                Left = this.ClientSize.Width - 260,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            _btnPortToggle.Click += (s, e) => TogglePort();
+            Controls.Add(_btnPortToggle);
+            UpdatePortButtonText();
+            _btnPortToggle.BringToFront();
+
+            // Set Location button (hidden by default)
+            _btnSetLocation = new Button
+            {
+                Text = "Set Location",
+                Width = 100,
+                Height = 24,
+                Top = 8,
+                Left = this.ClientSize.Width - 170,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Visible = false
+            };
+            _btnSetLocation.Click += (s, e) =>
+            {
+                using var dlg = new LocationPickerForm();
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                {
+                    SetLocationText($"Location: {dlg.SelectedLocation}");
+                    _btnSetLocation.Visible = false;
+                }
+            };
+            Controls.Add(_btnSetLocation);
+            _btnSetLocation.BringToFront();
         }
 
         private void AddResultsGrid()
         {
-            _grid = new DataGridView
+            // Use SplitContainer so each grid gets 50% width reliably
+            var split = new SplitContainer
             {
                 Dock = DockStyle.Bottom,
-                Height = 250,
-                ReadOnly = true,
+                Height = 300,
+                Orientation = Orientation.Vertical,
+                SplitterDistance = this.ClientSize.Width / 2,
+                IsSplitterFixed = false
+            };
+
+            _gridParams = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = false,
                 AllowUserToAddRows = false,
                 ColumnCount = 2,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
             };
-            _grid.Columns[0].Name = "Parameter";
-            _grid.Columns[1].Name = "Value";
-            Controls.Add(_grid);
+            _gridParams.Columns[0].Name = "Parameter";
+            _gridParams.Columns[1].Name = "Value";
+
+            _gridAdulteration = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = false,
+                AllowUserToAddRows = false,
+                ColumnCount = 2,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+            _gridAdulteration.Columns[0].Name = "Parameter";
+            _gridAdulteration.Columns[1].Name = "Value";
+
+            split.Panel1.Controls.Add(_gridParams);
+            split.Panel2.Controls.Add(_gridAdulteration);
+            Controls.Add(split);
+            _bottomSplit = split;
+            // Ensure initial equal split after layout
+            this.Resize += (s, e) =>
+            {
+                try
+                {
+                    if (_bottomSplit != null && _bottomSplit.Width > 0)
+                        _bottomSplit.SplitterDistance = _bottomSplit.Width / 2;
+                    if (_btnPortToggle != null)
+                        _btnPortToggle.Left = this.ClientSize.Width - 260;
+                    if (_btnSetLocation != null)
+                        _btnSetLocation.Left = this.ClientSize.Width - 170;
+                }
+                catch { }
+            };
+            // Trigger once to set positions
+            try { if (_bottomSplit != null && _bottomSplit.Width > 0) _bottomSplit.SplitterDistance = _bottomSplit.Width / 2; } catch { }
 
             // PDF button (position it next to the designer Start Test button)
             _pdfButton = new Button
@@ -172,18 +281,112 @@ namespace MilkAnalyzerTest
             }
         }
 
+        private async Task LoadAnalyzerParametersAsync()
+        {
+            try
+            {
+                _gridParams.Rows.Clear();
+                _gridAdulteration.Rows.Clear();
+
+                var rows = await MilkAnalyzerTest.DataAccess.Database.QueryAsync<(string Name, string KeyName)>(
+                    "SELECT Name, KeyName FROM dbo.MilkAnalyzerParameters WHERE IsActive = 1 ORDER BY SortOrder, Name",
+                    reader => (
+                        reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                        reader.IsDBNull(1) ? string.Empty : reader.GetString(1)));
+
+                foreach (var r in rows)
+                {
+                    _gridParams.Rows.Add(r.Name, string.Empty);
+                    _gridAdulteration.Rows.Add(r.Name, string.Empty);
+                }
+            }
+            catch
+            {
+                // ignore load errors
+            }
+        }
+
+        private void ClearParameterValues()
+        {
+            if (_gridParams != null)
+            {
+                foreach (DataGridViewRow row in _gridParams.Rows)
+                {
+                    if (row.Cells.Count > 1) row.Cells[1].Value = string.Empty;
+                }
+            }
+            if (_gridAdulteration != null)
+            {
+                foreach (DataGridViewRow row in _gridAdulteration.Rows)
+                {
+                    if (row.Cells.Count > 1) row.Cells[1].Value = string.Empty;
+                }
+            }
+        }
+
+        private void TogglePort()
+        {
+            try
+            {
+                if (_serialPort == null)
+                {
+                    InitializeSerial();
+                    UpdatePortButtonText();
+                    return;
+                }
+
+                if (_serialPort.IsOpen)
+                {
+                    _serialPort.DataReceived -= SerialPort_DataReceived;
+                    _serialPort.Close();
+                    UpdatePortButtonText();
+                }
+                else
+                {
+                    _serialPort.DataReceived += SerialPort_DataReceived;
+                    _serialPort.Open();
+                    UpdatePortButtonText();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Port toggle failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void UpdatePortButtonText()
+        {
+            try
+            {
+                if (_btnPortToggle == null) return;
+                if (_serialPort != null && _serialPort.IsOpen)
+                {
+                    _btnPortToggle.Text = "Disconnect";
+                }
+                else
+                {
+                    _btnPortToggle.Text = "Connect";
+                }
+            }
+            catch { }
+        }
+
         private async Task LoadLatestResultsForProfileAsync(int profileId)
         {
             try
             {
-                _grid.Rows.Clear();
+                // Update parameter grids with latest result values
+                if (_gridParams != null) _gridParams.Rows.Clear();
+                if (_gridAdulteration != null) _gridAdulteration.Rows.Clear();
                 var resultId = await Database.GetLatestResultIdForProfileAsync(profileId);
                 if (!resultId.HasValue) return;
 
                 var values = await Database.GetResultValuesByResultIdAsync(resultId.Value);
+                // Map by parameter name
                 foreach (var v in values)
                 {
-                    _grid.Rows.Add(v.ParameterName, v.Value?.ToString() ?? string.Empty);
+                    _gridParams.Rows.Add(v.ParameterName, v.Value?.ToString() ?? string.Empty);
+                    _gridAdulteration.Rows.Add(v.ParameterName, v.Value?.ToString() ?? string.Empty);
                 }
             }
             catch (Exception ex)
@@ -192,39 +395,43 @@ namespace MilkAnalyzerTest
             }
         }
 
+        // Initialize serial port and subscribe to data events
         private void InitializeSerial()
         {
-            // Change "COM1" and 9600 to match your RS-232 device settings.
-            _serialPort = new SerialPort("COM8", 9600, Parity.None, 8, StopBits.One)
-            {
-                ReadTimeout = 1000,
-                DtrEnable = false,
-                RtsEnable = false,
-                NewLine = "\n"
-            };
-
-            _serialPort.DataReceived += SerialPort_DataReceived;
-
             try
             {
-                _serialPort.Open();
+                if (_serialPort != null) return;
+                _serialPort = new SerialPort("COM8", 9600, Parity.None, 8, StopBits.One)
+                {
+                    ReadTimeout = 1000,
+                    DtrEnable = false,
+                    RtsEnable = false,
+                    NewLine = "\n"
+                };
+                _serialPort.DataReceived += SerialPort_DataReceived;
+                try
+                {
+                    _serialPort.Open();
+                }
+                catch
+                {
+                    // ignore open errors; UpdatePortButtonText will show Connect
+                }
+                UpdatePortButtonText();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to open serial port: {ex.Message}", "Serial Port Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            catch { }
         }
 
+        // Serial data handler
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             try
             {
-                string data = _serialPort.ReadExisting();
+                var data = _serialPort?.ReadExisting();
                 if (string.IsNullOrEmpty(data)) return;
 
-                // Accumulate buffer and split on newline
                 _buffer.Append(data);
-                string all = _buffer.ToString();
+                var all = _buffer.ToString();
                 int idx;
                 while ((idx = all.IndexOf('\n')) >= 0)
                 {
@@ -232,17 +439,12 @@ namespace MilkAnalyzerTest
                     all = all.Substring(idx + 1);
                     _buffer.Clear();
                     if (!string.IsNullOrEmpty(all)) _buffer.Append(all);
-
-                    // Process complete message asynchronously
                     _ = ProcessMessageAsync(message);
                 }
             }
             catch (Exception ex)
             {
-                BeginInvoke((Action)(() =>
-                {
-                    MessageBox.Show($"Error reading serial data: {ex.Message}", "Serial Port Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }));
+                try { BeginInvoke((Action)(() => MessageBox.Show($"Error reading serial data: {ex.Message}", "Serial Port Error", MessageBoxButtons.OK, MessageBoxIcon.Error))); } catch { }
             }
         }
 
@@ -396,6 +598,83 @@ namespace MilkAnalyzerTest
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to generate PDF: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void InitializeLocation()
+        {
+            SetLocationText("Location: fetching...");
+
+            try
+            {
+                var watcher = new GeoCoordinateWatcher(GeoPositionAccuracy.Default)
+                {
+                    MovementThreshold = 1
+                };
+
+                watcher.PositionChanged += (s, e) =>
+                {
+                    try
+                    {
+                        var coord = e.Position.Location;
+                        if (coord != null && !coord.IsUnknown)
+                        {
+                            SetLocationText($"Location: {coord.Latitude:F6}, {coord.Longitude:F6}");
+                            try { watcher.Stop(); } catch { }
+                        }
+                    }
+                    catch { }
+                };
+
+                watcher.StatusChanged += (s, e) =>
+                {
+                    if (e.Status == GeoPositionStatus.Disabled || e.Status == GeoPositionStatus.NoData)
+                    {
+                        SetLocationText("Location unavilable");
+                        try { watcher.Stop(); } catch { }
+                    }
+                };
+
+                _ = Task.Run(() =>
+                {
+                    try
+                    {
+                        if (!watcher.TryStart(false, TimeSpan.FromSeconds(5)))
+                        {
+                            SetLocationText("Location unavilable");
+                            try { watcher.Stop(); } catch { }
+                        }
+                    }
+                    catch
+                    {
+                        SetLocationText("Location unavilable");
+                        try { watcher.Stop(); } catch { }
+                    }
+                });
+
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(8));
+                    if (lblLocation.Text.Contains("fetching")) SetLocationText("Location unavilable");
+                    try { watcher.Stop(); } catch { }
+                });
+            }
+            catch
+            {
+                SetLocationText("Location unavilable");
+            }
+        }
+
+        private void SetLocationText(string text)
+        {
+            if (lblLocation == null) return;
+            if (lblLocation.InvokeRequired)
+            {
+                lblLocation.Invoke(new Action(() => lblLocation.Text = text));
+            }
+            else
+            {
+                lblLocation.Text = text;
             }
         }
 

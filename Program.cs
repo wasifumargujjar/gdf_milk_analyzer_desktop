@@ -72,9 +72,9 @@ namespace MilkAnalyzerTest
                 MessageBox.Show($"Failed to seed Profile table: {ex.Message}", "Seeding Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
+            // Classic WinForms initialization for .NET Framework / Windows Desktop
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
 
             using var login = new LoginForm();
             var dlg = login.ShowDialog();

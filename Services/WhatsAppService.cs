@@ -31,7 +31,7 @@ namespace MilkAnalyzerTest.Services
             using var http = new HttpClient { BaseAddress = new Uri("https://graph.facebook.com/") };
             // 1) upload media
             using var content = new MultipartFormDataContent();
-            var fileBytes = await File.ReadAllBytesAsync(filePath);
+            var fileBytes = File.ReadAllBytes(filePath);
             var fileContent = new ByteArrayContent(fileBytes);
             fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
             content.Add(fileContent, "file", Path.GetFileName(filePath));

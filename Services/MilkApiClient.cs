@@ -18,7 +18,7 @@ namespace MilkAnalyzerTest.Services
             _http = http ?? new HttpClient();
             // Ensure base address ends with trailing slash so relative paths resolve under /api/
             var baseUrl = Settings.ApiBaseUrl ?? string.Empty;
-            if (!baseUrl.EndsWith('/')) baseUrl += '/';
+            if (!baseUrl.EndsWith("/")) baseUrl += '/';
             _http.BaseAddress = new Uri(baseUrl);
         }
 
