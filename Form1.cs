@@ -28,6 +28,10 @@ namespace MilkAnalyzerTest
         private Button _btnPortToggle;
         private Button _btnSetLocation;
         private SplitContainer _bottomSplit;
+        private string? _lastPhoneLookupValue;
+        private bool _phoneLookupInFlight;
+        private ComboBox cmbCustomerType;
+        private Label lblCustomerType;
 
         public MainForm()
         {
@@ -43,6 +47,58 @@ namespace MilkAnalyzerTest
             txtPhone.KeyDown += LookupField_KeyDown;
             txtNIC.KeyDown += LookupField_KeyDown;
             txtEmail.KeyDown += LookupField_KeyDown;
+            // wire leave handler for phone
+            txtPhone.Leave += Phone_Leave;
+
+            // Add customer type dropdown after txtEmail
+            try
+            {
+                lblCustomerType = new Label
+                {
+                    Text = "Customer Type:",
+                    // position next to txtEmail if space available, otherwise place below
+                    Top = txtEmail.Top + 3,
+                    AutoSize = true
+                };
+                cmbCustomerType = new ComboBox
+                {
+                    Width = 120,
+                    DropDownStyle = ComboBoxStyle.DropDownList
+                };
+                // compute placement after controls have measured
+                var proposedLeft = txtEmail.Left + txtEmail.Width + 10;
+                // if proposed placement would go out of client area, place below txtEmail instead
+                if (proposedLeft + 120 > this.ClientSize.Width - 20)
+                {
+                    // place label and combo below email
+                    lblCustomerType.Left = txtEmail.Left;
+                    lblCustomerType.Top = txtEmail.Top + txtEmail.Height + 6;
+                    cmbCustomerType.Left = lblCustomerType.Left + lblCustomerType.PreferredWidth + 6;
+                    cmbCustomerType.Top = lblCustomerType.Top - 3;
+                }
+                else
+                {
+                    lblCustomerType.Left = proposedLeft;
+                    cmbCustomerType.Left = lblCustomerType.Left + lblCustomerType.PreferredWidth + 6;
+                    cmbCustomerType.Top = txtEmail.Top;
+                    lblCustomerType.Top = txtEmail.Top + 3;
+                }
+
+                cmbCustomerType.DataSource = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>>
+                {
+                    new System.Collections.Generic.KeyValuePair<string,string>("Walk-in","WC"),
+                    new System.Collections.Generic.KeyValuePair<string,string>("Shop Owner","SC")
+                };
+                cmbCustomerType.DisplayMember = "Key";
+                cmbCustomerType.ValueMember = "Value";
+                cmbCustomerType.SelectedIndex = 0;
+
+                Controls.Add(lblCustomerType);
+                Controls.Add(cmbCustomerType);
+                lblCustomerType.BringToFront();
+                cmbCustomerType.BringToFront();
+            }
+            catch { }
         }
 
         private void AddTopButtons()
@@ -446,6 +502,8 @@ namespace MilkAnalyzerTest
                     if (!string.IsNullOrEmpty(all)) _buffer.Append(all);
                     _ = ProcessMessageAsync(message);
                 }
+
+                File.AppendAllLines("C:\\serial_log.txt" , new[] { $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - Received: {data.Trim()}" });
             }
             catch (Exception ex)
             {
@@ -699,44 +757,58 @@ namespace MilkAnalyzerTest
             }
         }
 
-        private void LookupField_KeyDown(object? sender, KeyEventArgs e)
+        private async void LookupField_KeyDown(object? sender, KeyEventArgs e)
         {
             if (e.KeyCode != Keys.Enter) return;
             e.SuppressKeyPress = true;
 
-            _ = Task.Run(async () =>
+            try
             {
-                try
-                {
-                    string? phone = null, nic = null, email = null;
-                    if (sender == txtPhone) phone = txtPhone.Text?.Trim();
-                    else if (sender == txtNIC) nic = txtNIC.Text?.Trim();
-                    else if (sender == txtEmail) email = txtEmail.Text?.Trim();
+                string? phone = null, nic = null, email = null;
+                if (sender == txtPhone) phone = txtPhone.Text?.Trim();
+                else if (sender == txtNIC) nic = txtNIC.Text?.Trim();
+                else if (sender == txtEmail) email = txtEmail.Text?.Trim();
 
-                    await TryAutoFillProfileAsync(phone, nic, email);
-                }
-                catch (Exception ex)
+                var info = await TryAutoFillProfileAsync(phone, nic, email);
+                if (info != null)
                 {
-                    try { BeginInvoke((Action)(() => MessageBox.Show($"Lookup failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error))); } catch { }
+                    // apply directly on UI thread
+                    if (!string.IsNullOrWhiteSpace(info.FullName)) txtName.Text = info.FullName;
+                    if (!string.IsNullOrWhiteSpace(info.Cnic)) txtNIC.Text = info.Cnic;
+                    if (!string.IsNullOrWhiteSpace(info.Phone)) txtPhone.Text = info.Phone;
+                    if (!string.IsNullOrWhiteSpace(info.Email)) txtEmail.Text = info.Email;
+                    if (info.Id.HasValue) _currentProfileId = info.Id.Value;
+                    if (!string.IsNullOrWhiteSpace(info.Phone)) _lastPhoneLookupValue = info.Phone;
                 }
-            });
+            }
+            catch (Exception ex)
+            {
+                try { MessageBox.Show($"Lookup failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); } catch { }
+            }
         }
 
-        private async Task TryAutoFillProfileAsync(string? phoneNumber, string? cnicNumber, string? email)
+        private class ProfileInfo
+        {
+            public int? Id { get; set; }
+            public string? FullName { get; set; }
+            public string? Email { get; set; }
+            public string? Phone { get; set; }
+            public string? Cnic { get; set; }
+        }
+
+        private async Task<ProfileInfo?> TryAutoFillProfileAsync(string? phoneNumber, string? cnicNumber, string? email)
         {
             phoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
             cnicNumber = string.IsNullOrWhiteSpace(cnicNumber) ? null : cnicNumber.Trim();
             email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
 
-            if (phoneNumber == null && cnicNumber == null && email == null) return;
+            if (phoneNumber == null && cnicNumber == null && email == null) return null;
 
             using var http = new HttpClient();
-            // Ensure base address ends with slash if Settings.ApiBaseUrl provided
             var baseUrl = MilkAnalyzerTest.Config.Settings.ApiBaseUrl ?? string.Empty;
             if (!baseUrl.EndsWith("/")) baseUrl += '/';
             http.BaseAddress = new Uri(baseUrl);
 
-            // Build query params - include only the one provided (prefer the one that triggered)
             var qs = new System.Text.StringBuilder();
             if (phoneNumber != null) qs.Append($"phoneNumber={Uri.EscapeDataString(phoneNumber)}");
             else if (cnicNumber != null) qs.Append($"cnicNumber={Uri.EscapeDataString(cnicNumber)}");
@@ -745,38 +817,64 @@ namespace MilkAnalyzerTest
             var url = $"users/getProfileInfo?{qs}";
 
             using var resp = await http.GetAsync(url);
-            if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                // no profile found - do nothing
-                return;
-            }
+            if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
 
             resp.EnsureSuccessStatusCode();
             var body = await resp.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(body);
             var root = doc.RootElement;
 
-            // Map fields safely
-            int id = 0;
-            if (root.TryGetProperty("Id", out var idElem) && idElem.ValueKind == JsonValueKind.Number) id = idElem.GetInt32();
-            var fullName = root.TryGetProperty("FullName", out var fn) ? fn.GetString() : (root.TryGetProperty("UserName", out var un) ? un.GetString() : null);
-            var respEmail = root.TryGetProperty("Email", out var em) ? em.GetString() : null;
-            var respPhone = root.TryGetProperty("PhoneNumber", out var pn) ? pn.GetString() : null;
-            var respCnic = root.TryGetProperty("CnicNumber", out var cn) ? cn.GetString() : (root.TryGetProperty("CNICNumber", out var cn2) ? cn2.GetString() : null);
+            var info = new ProfileInfo();
+            if (root.TryGetProperty("Id", out var idElem) && idElem.ValueKind == JsonValueKind.Number) info.Id = idElem.GetInt32();
+            info.FullName = root.TryGetProperty("fullName", out var fn) ? fn.GetString() : (root.TryGetProperty("userName", out var un) ? un.GetString() : null);
+            info.Email = root.TryGetProperty("email", out var em) ? em.GetString() : null;
+            info.Phone = root.TryGetProperty("phoneNumber", out var pn) ? pn.GetString() : null;
+            info.Cnic = root.TryGetProperty("cnicNumber", out var cn) ? cn.GetString() : (root.TryGetProperty("cNICNumber", out var cn2) ? cn2.GetString() : null);
 
-            // Update UI on UI thread
-            BeginInvoke((Action)(() =>
+            return info;
+        }
+
+        // Called when phone textbox loses focus; performs lookup if value changed and none in-flight
+        private void Phone_Leave(object? sender, EventArgs e)
+        {
+            try
             {
-                try
+                var val = txtPhone.Text?.Trim();
+                if (string.IsNullOrWhiteSpace(val)) return;
+                if (_phoneLookupInFlight) return;
+                if (_lastPhoneLookupValue != null && string.Equals(_lastPhoneLookupValue, val, StringComparison.OrdinalIgnoreCase)) return;
+
+                _phoneLookupInFlight = true;
+                _ = Task.Run(async () =>
                 {
-                    if (!string.IsNullOrWhiteSpace(fullName)) txtName.Text = fullName;
-                    if (!string.IsNullOrWhiteSpace(respCnic)) txtNIC.Text = respCnic;
-                    if (!string.IsNullOrWhiteSpace(respPhone)) txtPhone.Text = respPhone;
-                    if (!string.IsNullOrWhiteSpace(respEmail)) txtEmail.Text = respEmail;
-                    if (id != 0) _currentProfileId = id;
-                }
-                catch { }
-            }));
+                    try
+                    {
+                        var info = await TryAutoFillProfileAsync(val, null, null);
+                        if (info != null)
+                        {
+                            try { BeginInvoke((Action)(() =>
+                            {
+                                if (!string.IsNullOrWhiteSpace(info.FullName)) txtName.Text = info.FullName;
+                                if (!string.IsNullOrWhiteSpace(info.Cnic)) txtNIC.Text = info.Cnic;
+                                if (!string.IsNullOrWhiteSpace(info.Phone)) txtPhone.Text = info.Phone;
+                                if (!string.IsNullOrWhiteSpace(info.Email)) txtEmail.Text = info.Email;
+                                if (info.Id.HasValue) _currentProfileId = info.Id.Value;
+                                if (!string.IsNullOrWhiteSpace(info.Phone)) _lastPhoneLookupValue = info.Phone;
+                            })); } catch { }
+                        }
+                    }
+                    finally
+                    {
+                        _phoneLookupInFlight = false;
+                    }
+                });
+            }
+            catch { }
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

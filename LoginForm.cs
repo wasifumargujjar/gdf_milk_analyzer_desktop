@@ -10,9 +10,15 @@ namespace MilkAnalyzerTest
         public LoginForm()
         {
             InitializeComponent();
+            // Allow pressing Enter to trigger the login button
+            try { this.AcceptButton = btnLogin; } catch { }
         }
 
         private async void BtnLogin_Click(object? sender, EventArgs e)
+        {
+        }
+
+        private async void btnLogin_Click_1(object sender, EventArgs e)
         {
             var username = txtUsername.Text.Trim();
             var password = txtPassword.Text;
