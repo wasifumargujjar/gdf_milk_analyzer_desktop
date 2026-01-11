@@ -16,240 +16,58 @@ namespace MilkAnalyzerTest
 {
     public partial class MainForm : Form
     {
+        // runtime-only state; UI controls are declared in Form1.Designer.cs
         private SerialPort _serialPort;
         private readonly StringBuilder _buffer = new();
-        private Button _testButton;
-        private Button _pdfButton;
         private int? _currentProfileId;
-        private DataGridView _grid;
-        private DataGridView _gridParams;
-        private DataGridView _gridAdulteration;
-        private Button _btnNewTest;
-        private Button _btnPortToggle;
-        private Button _btnSetLocation;
-        private SplitContainer _bottomSplit;
         private string? _lastPhoneLookupValue;
         private bool _phoneLookupInFlight;
-        private ComboBox cmbCustomerType;
-        private Label lblCustomerType;
 
         public MainForm()
         {
             InitializeComponent();
             InitializeSerial();
-            AddTestButton();
-            AddResultsGrid();
-            AddTopButtons();
+
+            // Wire designer controls to handlers (safe for designer-time)
+            try { _testButton.Click += RunTestButton_Click; } catch { }
+            try { _pdfButton.Click += PdfButton_Click; } catch { }
+            try { _btnNewTest.Click += (s, e) => ClearParameterValues(); } catch { }
+            try { _btnPortToggle.Click += (s, e) => TogglePort(); UpdatePortButtonText(); } catch { }
+            try { _btnSetLocation.Click += (s, e) => { using var dlg = new LocationPickerForm(); if (dlg.ShowDialog(this) == DialogResult.OK) { SetLocationText($"Location: {dlg.SelectedLocation}"); _btnSetLocation.Visible = false; } }; } catch { }
+
             // Load analyzer parameters into parameter grids
             _ = LoadAnalyzerParametersAsync();
 
             // Attach Enter key handlers to perform profile lookup
-            txtPhone.KeyDown += LookupField_KeyDown;
-            txtNIC.KeyDown += LookupField_KeyDown;
-            txtEmail.KeyDown += LookupField_KeyDown;
+            try { txtPhone.KeyDown += LookupField_KeyDown; } catch { }
+            try { txtNIC.KeyDown += LookupField_KeyDown; } catch { }
+            try { txtEmail.KeyDown += LookupField_KeyDown; } catch { }
             // wire leave handler for phone
-            txtPhone.Leave += Phone_Leave;
+            try { txtPhone.Leave += Phone_Leave; } catch { }
+            // ensure customer type default
+            try { if (cmbCustomerType != null && cmbCustomerType.Items.Count > 0) cmbCustomerType.SelectedIndex = 0; } catch { }
 
-            // Add customer type dropdown after txtEmail
+            // adjust splitter initially
+            try { if (_bottomSplit != null && _bottomSplit.Width > 0) _bottomSplit.SplitterDistance = _bottomSplit.Width / 2; } catch { }
+
+            // Handle runtime resizing for Right-anchored controls and splitter (do not put these in InitializeComponent)
+            this.Resize += MainForm_Resize;
+            // set initial positions
+            MainForm_Resize(this, EventArgs.Empty);
+        }
+
+        private void MainForm_Resize(object? sender, EventArgs e)
+        {
             try
             {
-                lblCustomerType = new Label
-                {
-                    Text = "Customer Type:",
-                    // position next to txtEmail if space available, otherwise place below
-                    Top = txtEmail.Top + 3,
-                    AutoSize = true
-                };
-                cmbCustomerType = new ComboBox
-                {
-                    Width = 120,
-                    DropDownStyle = ComboBoxStyle.DropDownList
-                };
-                // compute placement after controls have measured
-                var proposedLeft = txtEmail.Left + txtEmail.Width + 10;
-                // if proposed placement would go out of client area, place below txtEmail instead
-                if (proposedLeft + 120 > this.ClientSize.Width - 20)
-                {
-                    // place label and combo below email
-                    lblCustomerType.Left = txtEmail.Left;
-                    lblCustomerType.Top = txtEmail.Top + txtEmail.Height + 6;
-                    cmbCustomerType.Left = lblCustomerType.Left + lblCustomerType.PreferredWidth + 6;
-                    cmbCustomerType.Top = lblCustomerType.Top - 3;
-                }
-                else
-                {
-                    lblCustomerType.Left = proposedLeft;
-                    cmbCustomerType.Left = lblCustomerType.Left + lblCustomerType.PreferredWidth + 6;
-                    cmbCustomerType.Top = txtEmail.Top;
-                    lblCustomerType.Top = txtEmail.Top + 3;
-                }
-
-                cmbCustomerType.DataSource = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>>
-                {
-                    new System.Collections.Generic.KeyValuePair<string,string>("Walk-in","WC"),
-                    new System.Collections.Generic.KeyValuePair<string,string>("Shop Owner","SC")
-                };
-                cmbCustomerType.DisplayMember = "Key";
-                cmbCustomerType.ValueMember = "Value";
-                cmbCustomerType.SelectedIndex = 0;
-
-                Controls.Add(lblCustomerType);
-                Controls.Add(cmbCustomerType);
-                lblCustomerType.BringToFront();
-                cmbCustomerType.BringToFront();
+                if (_btnPortToggle != null) _btnPortToggle.Left = Math.Max(0, this.ClientSize.Width - 260);
+                if (_btnSetLocation != null) _btnSetLocation.Left = Math.Max(0, this.ClientSize.Width - 170);
+                if (_bottomSplit != null && _bottomSplit.Width > 0) _bottomSplit.SplitterDistance = _bottomSplit.Width / 2;
             }
             catch { }
         }
 
-        private void AddTopButtons()
-        {
-            // New Test button at top-left
-            _btnNewTest = new Button
-            {
-                Text = "New Test",
-                Left = 140,
-                Top = 10,
-                Width = 100,
-                Height = 30
-            };
-            _btnNewTest.Click += (s, e) =>
-            {
-                // Clear values column in parameter grids
-                ClearParameterValues();
-            };
-            Controls.Add(_btnNewTest);
-            _btnNewTest.BringToFront();
-
-            // Port toggle button at top-right (placed before location label)
-            _btnPortToggle = new Button
-            {
-                Width = 80,
-                Height = 24,
-                Top = 8,
-                Left = this.ClientSize.Width - 260,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
-            };
-            _btnPortToggle.Click += (s, e) => TogglePort();
-            Controls.Add(_btnPortToggle);
-            UpdatePortButtonText();
-            _btnPortToggle.BringToFront();
-
-            // Set Location button (hidden by default)
-            _btnSetLocation = new Button
-            {
-                Text = "Set Location",
-                Width = 100,
-                Height = 24,
-                Top = 8,
-                Left = this.ClientSize.Width - 170,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Visible = false
-            };
-            _btnSetLocation.Click += (s, e) =>
-            {
-                using var dlg = new LocationPickerForm();
-                if (dlg.ShowDialog(this) == DialogResult.OK)
-                {
-                    SetLocationText($"Location: {dlg.SelectedLocation}");
-                    _btnSetLocation.Visible = false;
-                }
-            };
-            Controls.Add(_btnSetLocation);
-            _btnSetLocation.BringToFront();
-        }
-
-        private void AddResultsGrid()
-        {
-            // Use SplitContainer so each grid gets 50% width reliably
-            var split = new SplitContainer
-            {
-                Dock = DockStyle.Bottom,
-                Height = 300,
-                Orientation = Orientation.Vertical,
-                SplitterDistance = this.ClientSize.Width / 2,
-                IsSplitterFixed = false
-            };
-
-            _gridParams = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                ReadOnly = false,
-                AllowUserToAddRows = false,
-                ColumnCount = 2,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-            };
-            _gridParams.Columns[0].Name = "Parameter";
-            _gridParams.Columns[1].Name = "Value";
-
-            _gridAdulteration = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                ReadOnly = false,
-                AllowUserToAddRows = false,
-                ColumnCount = 2,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-            };
-            _gridAdulteration.Columns[0].Name = "Parameter";
-            _gridAdulteration.Columns[1].Name = "Value";
-
-            split.Panel1.Controls.Add(_gridParams);
-            split.Panel2.Controls.Add(_gridAdulteration);
-            Controls.Add(split);
-            _bottomSplit = split;
-            // Ensure initial equal split after layout
-            this.Resize += (s, e) =>
-            {
-                try
-                {
-                    if (_bottomSplit != null && _bottomSplit.Width > 0)
-                        _bottomSplit.SplitterDistance = _bottomSplit.Width / 2;
-                    if (_btnPortToggle != null)
-                        _btnPortToggle.Left = this.ClientSize.Width - 260;
-                    if (_btnSetLocation != null)
-                        _btnSetLocation.Left = this.ClientSize.Width - 170;
-                }
-                catch { }
-            };
-            // Trigger once to set positions
-            try { if (_bottomSplit != null && _bottomSplit.Width > 0) _bottomSplit.SplitterDistance = _bottomSplit.Width / 2; } catch { }
-
-            // PDF button (position it next to the designer Start Test button)
-            _pdfButton = new Button
-            {
-                Width = 120,
-                Height = 30,
-                Text = "Generate PDF"
-            };
-            // If the designer button exists, position relative to it; otherwise use defaults.
-            try
-            {
-                _pdfButton.Left = btnStartTest.Left + btnStartTest.Width + 10;
-                _pdfButton.Top = btnStartTest.Top;
-            }
-            catch
-            {
-                _pdfButton.Left = 300;
-                _pdfButton.Top = 12;
-            }
-            _pdfButton.Click += PdfButton_Click;
-            Controls.Add(_pdfButton);
-            _pdfButton.BringToFront();
-        }
-
-        private void AddTestButton()
-        {
-            _testButton = new Button
-            {
-                Text = "Run Test Insert",
-                Width = 120,
-                Height = 30,
-                Left = 10,
-                Top = 10
-            };
-            _testButton.Click += RunTestButton_Click;
-            Controls.Add(_testButton);
-        }
-
+        // Click handler for the top "Run Test Insert" button
         private void RunTestButton_Click(object? sender, EventArgs e)
         {
             if (_currentProfileId.HasValue)
