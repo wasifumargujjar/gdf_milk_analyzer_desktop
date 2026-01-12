@@ -30,6 +30,12 @@
         private System.Windows.Forms.Label lblCustomerType;
         private System.Windows.Forms.ComboBox cmbCustomerType;
 
+        // New layout containers (design-time)
+        private System.Windows.Forms.Panel _topCommandPanel;
+        private System.Windows.Forms.GroupBox _groupCustomer;
+        private System.Windows.Forms.TableLayoutPanel _customerTable;
+        private System.Windows.Forms.GroupBox _groupResults;
+
         /// <summary>
         ///  Clean up any resources being used.
         /// </summary>
@@ -75,117 +81,137 @@
             this._gridAdulteration = new System.Windows.Forms.DataGridView();
             this.lblCustomerType = new System.Windows.Forms.Label();
             this.cmbCustomerType = new System.Windows.Forms.ComboBox();
+            this._topCommandPanel = new System.Windows.Forms.Panel();
+            this._groupCustomer = new System.Windows.Forms.GroupBox();
+            this._customerTable = new System.Windows.Forms.TableLayoutPanel();
+            this._groupResults = new System.Windows.Forms.GroupBox();
             ((System.ComponentModel.ISupportInitialize)(this._bottomSplit)).BeginInit();
-            this._bottomSplit.Panel1.SuspendLayout();
-            this._bottomSplit.Panel2.SuspendLayout();
             this._bottomSplit.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._gridParams)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this._gridAdulteration)).BeginInit();
+            this._topCommandPanel.SuspendLayout();
+            this._groupCustomer.SuspendLayout();
+            this._customerTable.SuspendLayout();
+            this._groupResults.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblName
             // 
-            this.lblName.Location = new System.Drawing.Point(9, 91);
+            this.lblName.AutoSize = true;
+            this.lblName.Location = new System.Drawing.Point(3, 0);
             this.lblName.Name = "lblName";
-            this.lblName.Size = new System.Drawing.Size(89, 16);
+            this.lblName.Size = new System.Drawing.Size(47, 16);
             this.lblName.TabIndex = 0;
             this.lblName.Text = "Name:";
             // 
             // lblNIC
             // 
-            this.lblNIC.Location = new System.Drawing.Point(9, 134);
+            this.lblNIC.AutoSize = true;
+            this.lblNIC.Location = new System.Drawing.Point(3, 30);
             this.lblNIC.Name = "lblNIC";
-            this.lblNIC.Size = new System.Drawing.Size(89, 16);
+            this.lblNIC.Size = new System.Drawing.Size(32, 16);
             this.lblNIC.TabIndex = 1;
             this.lblNIC.Text = "NIC:";
             // 
             // lblPhone
             // 
-            this.lblPhone.Location = new System.Drawing.Point(9, 174);
+            this.lblPhone.AutoSize = true;
+            this.lblPhone.Location = new System.Drawing.Point(522, 30);
             this.lblPhone.Name = "lblPhone";
-            this.lblPhone.Size = new System.Drawing.Size(89, 16);
+            this.lblPhone.Size = new System.Drawing.Size(49, 16);
             this.lblPhone.TabIndex = 2;
             this.lblPhone.Text = "Phone:";
             // 
             // lblWhatsapp
             // 
-            this.lblWhatsapp.Location = new System.Drawing.Point(9, 247);
+            this.lblWhatsapp.AutoSize = true;
+            this.lblWhatsapp.Location = new System.Drawing.Point(522, 60);
             this.lblWhatsapp.Name = "lblWhatsapp";
-            this.lblWhatsapp.Size = new System.Drawing.Size(89, 16);
+            this.lblWhatsapp.Size = new System.Drawing.Size(72, 16);
             this.lblWhatsapp.TabIndex = 4;
             this.lblWhatsapp.Text = "Whatsapp:";
             // 
             // lblAddress
             // 
-            this.lblAddress.Location = new System.Drawing.Point(9, 274);
+            this.lblAddress.AutoSize = true;
+            this.lblAddress.Location = new System.Drawing.Point(3, 90);
             this.lblAddress.Name = "lblAddress";
-            this.lblAddress.Size = new System.Drawing.Size(89, 16);
+            this.lblAddress.Size = new System.Drawing.Size(61, 16);
             this.lblAddress.TabIndex = 5;
             this.lblAddress.Text = "Address:";
             // 
             // lblEmail
             // 
-            this.lblEmail.Location = new System.Drawing.Point(9, 211);
+            this.lblEmail.AutoSize = true;
+            this.lblEmail.Location = new System.Drawing.Point(3, 60);
             this.lblEmail.Name = "lblEmail";
-            this.lblEmail.Size = new System.Drawing.Size(89, 16);
+            this.lblEmail.Size = new System.Drawing.Size(44, 16);
             this.lblEmail.TabIndex = 3;
             this.lblEmail.Text = "Email:";
             // 
             // txtName
             // 
-            this.txtName.Location = new System.Drawing.Point(107, 89);
+            this.txtName.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtName.Location = new System.Drawing.Point(113, 2);
             this.txtName.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtName.Name = "txtName";
-            this.txtName.Size = new System.Drawing.Size(400, 22);
+            this.txtName.Size = new System.Drawing.Size(403, 22);
             this.txtName.TabIndex = 6;
             // 
             // txtNIC
             // 
-            this.txtNIC.Location = new System.Drawing.Point(107, 132);
+            this.txtNIC.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtNIC.Location = new System.Drawing.Point(113, 32);
             this.txtNIC.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtNIC.Name = "txtNIC";
-            this.txtNIC.Size = new System.Drawing.Size(223, 22);
+            this.txtNIC.Size = new System.Drawing.Size(403, 22);
             this.txtNIC.TabIndex = 7;
             // 
             // txtPhone
             // 
-            this.txtPhone.Location = new System.Drawing.Point(107, 172);
+            this.txtPhone.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtPhone.Location = new System.Drawing.Point(642, 32);
             this.txtPhone.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtPhone.Name = "txtPhone";
-            this.txtPhone.Size = new System.Drawing.Size(223, 22);
+            this.txtPhone.Size = new System.Drawing.Size(403, 22);
             this.txtPhone.TabIndex = 8;
             // 
             // txtEmail
             // 
-            this.txtEmail.Location = new System.Drawing.Point(107, 209);
+            this.txtEmail.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtEmail.Location = new System.Drawing.Point(113, 62);
             this.txtEmail.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtEmail.Name = "txtEmail";
-            this.txtEmail.Size = new System.Drawing.Size(223, 22);
+            this.txtEmail.Size = new System.Drawing.Size(403, 22);
             this.txtEmail.TabIndex = 9;
             // 
             // txtWhatsapp
             // 
-            this.txtWhatsapp.Location = new System.Drawing.Point(107, 245);
+            this.txtWhatsapp.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtWhatsapp.Location = new System.Drawing.Point(642, 62);
             this.txtWhatsapp.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtWhatsapp.Name = "txtWhatsapp";
-            this.txtWhatsapp.Size = new System.Drawing.Size(223, 22);
+            this.txtWhatsapp.Size = new System.Drawing.Size(403, 22);
             this.txtWhatsapp.TabIndex = 10;
             // 
             // txtAddress
             // 
-            this.txtAddress.Location = new System.Drawing.Point(107, 271);
+            this._customerTable.SetColumnSpan(this.txtAddress, 3);
+            this.txtAddress.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtAddress.Location = new System.Drawing.Point(113, 92);
             this.txtAddress.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtAddress.Multiline = true;
             this.txtAddress.Name = "txtAddress";
-            this.txtAddress.Size = new System.Drawing.Size(400, 57);
+            this.txtAddress.Size = new System.Drawing.Size(932, 81);
             this.txtAddress.TabIndex = 11;
             // 
             // btnStartTest
             // 
-            this.btnStartTest.Location = new System.Drawing.Point(107, 332);
+            this.btnStartTest.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnStartTest.Location = new System.Drawing.Point(480, 260);
             this.btnStartTest.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnStartTest.Name = "btnStartTest";
-            this.btnStartTest.Size = new System.Drawing.Size(107, 21);
+            this.btnStartTest.Size = new System.Drawing.Size(120, 28);
             this.btnStartTest.TabIndex = 12;
             this.btnStartTest.Text = "Start Test";
             this.btnStartTest.UseVisualStyleBackColor = true;
@@ -194,7 +220,7 @@
             // 
             this.lblLocation.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblLocation.AutoSize = true;
-            this.lblLocation.Location = new System.Drawing.Point(890, 8);
+            this.lblLocation.Location = new System.Drawing.Point(1758, 8);
             this.lblLocation.Name = "lblLocation";
             this.lblLocation.Size = new System.Drawing.Size(119, 16);
             this.lblLocation.TabIndex = 12;
@@ -202,27 +228,27 @@
             // 
             // _testButton
             // 
-            this._testButton.Location = new System.Drawing.Point(10, 10);
+            this._testButton.Location = new System.Drawing.Point(8, 8);
             this._testButton.Name = "_testButton";
-            this._testButton.Size = new System.Drawing.Size(120, 30);
+            this._testButton.Size = new System.Drawing.Size(120, 28);
             this._testButton.TabIndex = 13;
             this._testButton.Text = "Run Test Insert";
             this._testButton.UseVisualStyleBackColor = true;
             // 
             // _pdfButton
             // 
-            this._pdfButton.Location = new System.Drawing.Point(300, 12);
+            this._pdfButton.Location = new System.Drawing.Point(244, 8);
             this._pdfButton.Name = "_pdfButton";
-            this._pdfButton.Size = new System.Drawing.Size(120, 30);
+            this._pdfButton.Size = new System.Drawing.Size(120, 28);
             this._pdfButton.TabIndex = 17;
             this._pdfButton.Text = "Generate PDF";
             this._pdfButton.UseVisualStyleBackColor = true;
             // 
             // _btnNewTest
             // 
-            this._btnNewTest.Location = new System.Drawing.Point(140, 10);
+            this._btnNewTest.Location = new System.Drawing.Point(136, 8);
             this._btnNewTest.Name = "_btnNewTest";
-            this._btnNewTest.Size = new System.Drawing.Size(100, 30);
+            this._btnNewTest.Size = new System.Drawing.Size(100, 28);
             this._btnNewTest.TabIndex = 14;
             this._btnNewTest.Text = "New Test";
             this._btnNewTest.UseVisualStyleBackColor = true;
@@ -230,7 +256,7 @@
             // _btnPortToggle
             // 
             this._btnPortToggle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this._btnPortToggle.Location = new System.Drawing.Point(808, 8);
+            this._btnPortToggle.Location = new System.Drawing.Point(1636, 10);
             this._btnPortToggle.Name = "_btnPortToggle";
             this._btnPortToggle.Size = new System.Drawing.Size(80, 24);
             this._btnPortToggle.TabIndex = 15;
@@ -240,7 +266,7 @@
             // _btnSetLocation
             // 
             this._btnSetLocation.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this._btnSetLocation.Location = new System.Drawing.Point(898, 8);
+            this._btnSetLocation.Location = new System.Drawing.Point(1722, 10);
             this._btnSetLocation.Name = "_btnSetLocation";
             this._btnSetLocation.Size = new System.Drawing.Size(100, 24);
             this._btnSetLocation.TabIndex = 16;
@@ -250,104 +276,156 @@
             // 
             // _bottomSplit
             // 
-            this._bottomSplit.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this._bottomSplit.Location = new System.Drawing.Point(0, 267);
+            this._bottomSplit.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._bottomSplit.Location = new System.Drawing.Point(8, 23);
             this._bottomSplit.Name = "_bottomSplit";
-            // 
-            // _bottomSplit.Panel1
-            // 
-            this._bottomSplit.Panel1.Controls.Add(this._gridParams);
-            // 
-            // _bottomSplit.Panel2
-            // 
-            this._bottomSplit.Panel2.Controls.Add(this._gridAdulteration);
-            this._bottomSplit.Size = new System.Drawing.Size(1068, 300);
-            this._bottomSplit.SplitterDistance = 861;
-            this._bottomSplit.TabIndex = 18;
+            this._bottomSplit.Size = new System.Drawing.Size(1052, 282);
+            this._bottomSplit.SplitterDistance = 848;
+            this._bottomSplit.TabIndex = 0;
             // 
             // _gridParams
             // 
-            this._gridParams.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this._gridParams.AllowUserToAddRows = false;
+            this._gridParams.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this._gridParams.ColumnHeadersHeight = 32;
             this._gridParams.Dock = System.Windows.Forms.DockStyle.Fill;
             this._gridParams.Location = new System.Drawing.Point(0, 0);
             this._gridParams.Name = "_gridParams";
-            this._gridParams.RowHeadersWidth = 51;
-            this._gridParams.RowTemplate.Height = 24;
-            this._gridParams.Size = new System.Drawing.Size(861, 300);
+            this._gridParams.RowHeadersVisible = false;
+            this._gridParams.RowHeadersWidth = 57;
+            this._gridParams.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this._gridParams.Size = new System.Drawing.Size(240, 150);
             this._gridParams.TabIndex = 0;
             // 
             // _gridAdulteration
             // 
-            this._gridAdulteration.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this._gridAdulteration.AllowUserToAddRows = false;
+            this._gridAdulteration.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this._gridAdulteration.ColumnHeadersHeight = 32;
             this._gridAdulteration.Dock = System.Windows.Forms.DockStyle.Fill;
             this._gridAdulteration.Location = new System.Drawing.Point(0, 0);
             this._gridAdulteration.Name = "_gridAdulteration";
-            this._gridAdulteration.RowHeadersWidth = 51;
-            this._gridAdulteration.RowTemplate.Height = 24;
-            this._gridAdulteration.Size = new System.Drawing.Size(203, 300);
+            this._gridAdulteration.RowHeadersVisible = false;
+            this._gridAdulteration.RowHeadersWidth = 57;
+            this._gridAdulteration.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this._gridAdulteration.Size = new System.Drawing.Size(240, 150);
             this._gridAdulteration.TabIndex = 0;
             // 
             // lblCustomerType
             // 
             this.lblCustomerType.AutoSize = true;
-            this.lblCustomerType.Location = new System.Drawing.Point(352, 138);
+            this.lblCustomerType.Location = new System.Drawing.Point(522, 0);
             this.lblCustomerType.Name = "lblCustomerType";
-            this.lblCustomerType.Size = new System.Drawing.Size(102, 16);
-            this.lblCustomerType.TabIndex = 19;
-            this.lblCustomerType.Text = "Customer Type:";
+            this.lblCustomerType.Size = new System.Drawing.Size(0, 16);
+            this.lblCustomerType.TabIndex = 7;
             // 
             // cmbCustomerType
             // 
-            this.cmbCustomerType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbCustomerType.FormattingEnabled = true;
-            this.cmbCustomerType.Items.AddRange(new object[] {
-            "Walk-in",
-            "Shop Owner"});
-            this.cmbCustomerType.Location = new System.Drawing.Point(452, 135);
+            this.cmbCustomerType.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cmbCustomerType.Location = new System.Drawing.Point(642, 3);
             this.cmbCustomerType.Name = "cmbCustomerType";
-            this.cmbCustomerType.Size = new System.Drawing.Size(120, 24);
-            this.cmbCustomerType.TabIndex = 20;
+            this.cmbCustomerType.Size = new System.Drawing.Size(403, 24);
+            this.cmbCustomerType.TabIndex = 8;
+            // 
+            // _topCommandPanel
+            // 
+            this._topCommandPanel.Controls.Add(this._testButton);
+            this._topCommandPanel.Controls.Add(this._btnNewTest);
+            this._topCommandPanel.Controls.Add(this._pdfButton);
+            this._topCommandPanel.Controls.Add(this._btnPortToggle);
+            this._topCommandPanel.Controls.Add(this._btnSetLocation);
+            this._topCommandPanel.Controls.Add(this.lblLocation);
+            this._topCommandPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this._topCommandPanel.Location = new System.Drawing.Point(0, 0);
+            this._topCommandPanel.Name = "_topCommandPanel";
+            this._topCommandPanel.Padding = new System.Windows.Forms.Padding(8);
+            this._topCommandPanel.Size = new System.Drawing.Size(1068, 44);
+            this._topCommandPanel.TabIndex = 14;
+            // 
+            // _groupCustomer
+            // 
+            this._groupCustomer.Controls.Add(this._customerTable);
+            this._groupCustomer.Dock = System.Windows.Forms.DockStyle.Top;
+            this._groupCustomer.Location = new System.Drawing.Point(0, 44);
+            this._groupCustomer.Name = "_groupCustomer";
+            this._groupCustomer.Padding = new System.Windows.Forms.Padding(10);
+            this._groupCustomer.Size = new System.Drawing.Size(1068, 210);
+            this._groupCustomer.TabIndex = 13;
+            this._groupCustomer.TabStop = false;
+            this._groupCustomer.Text = "Customer Details";
+            // 
+            // _customerTable
+            // 
+            this._customerTable.AutoSize = true;
+            this._customerTable.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this._customerTable.ColumnCount = 4;
+            this._customerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+            this._customerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this._customerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 120F));
+            this._customerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this._customerTable.Controls.Add(this.lblName, 0, 0);
+            this._customerTable.Controls.Add(this.txtName, 1, 0);
+            this._customerTable.Controls.Add(this.lblCustomerType, 2, 0);
+            this._customerTable.Controls.Add(this.cmbCustomerType, 3, 0);
+            this._customerTable.Controls.Add(this.lblNIC, 0, 1);
+            this._customerTable.Controls.Add(this.txtNIC, 1, 1);
+            this._customerTable.Controls.Add(this.lblPhone, 2, 1);
+            this._customerTable.Controls.Add(this.txtPhone, 3, 1);
+            this._customerTable.Controls.Add(this.lblEmail, 0, 2);
+            this._customerTable.Controls.Add(this.txtEmail, 1, 2);
+            this._customerTable.Controls.Add(this.lblWhatsapp, 2, 2);
+            this._customerTable.Controls.Add(this.txtWhatsapp, 3, 2);
+            this._customerTable.Controls.Add(this.lblAddress, 0, 3);
+            this._customerTable.Controls.Add(this.txtAddress, 1, 3);
+            this._customerTable.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._customerTable.Location = new System.Drawing.Point(10, 25);
+            this._customerTable.Name = "_customerTable";
+            this._customerTable.RowCount = 4;
+            this._customerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this._customerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this._customerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this._customerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this._customerTable.Size = new System.Drawing.Size(1048, 175);
+            this._customerTable.TabIndex = 0;
+            // 
+            // _groupResults
+            // 
+            this._groupResults.Controls.Add(this._bottomSplit);
+            this._groupResults.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._groupResults.Location = new System.Drawing.Point(0, 254);
+            this._groupResults.Name = "_groupResults";
+            this._groupResults.Padding = new System.Windows.Forms.Padding(8);
+            this._groupResults.Size = new System.Drawing.Size(1068, 313);
+            this._groupResults.TabIndex = 0;
+            this._groupResults.TabStop = false;
+            this._groupResults.Text = "Test Results";
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1068, 567);
-            this.Controls.Add(this.lblName);
-            this.Controls.Add(this.lblNIC);
-            this.Controls.Add(this.lblPhone);
-            this.Controls.Add(this.lblEmail);
-            this.Controls.Add(this.lblWhatsapp);
-            this.Controls.Add(this.lblAddress);
-            this.Controls.Add(this.txtName);
-            this.Controls.Add(this.txtNIC);
-            this.Controls.Add(this.txtPhone);
-            this.Controls.Add(this.txtEmail);
-            this.Controls.Add(this.txtWhatsapp);
-            this.Controls.Add(this.txtAddress);
-            this.Controls.Add(this.lblLocation);
+            this.Controls.Add(this._groupResults);
             this.Controls.Add(this.btnStartTest);
-            this.Controls.Add(this._testButton);
-            this.Controls.Add(this._btnNewTest);
-            this.Controls.Add(this._btnPortToggle);
-            this.Controls.Add(this._btnSetLocation);
-            this.Controls.Add(this._pdfButton);
-            this.Controls.Add(this._bottomSplit);
-            this.Controls.Add(this.lblCustomerType);
-            this.Controls.Add(this.cmbCustomerType);
+            this.Controls.Add(this._groupCustomer);
+            this.Controls.Add(this._topCommandPanel);
             this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "MainForm";
             this.Text = "Milk Test";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.MainForm_Load);
-            this._bottomSplit.Panel1.ResumeLayout(false);
-            this._bottomSplit.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._bottomSplit)).EndInit();
             this._bottomSplit.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._gridParams)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this._gridAdulteration)).EndInit();
+            this._topCommandPanel.ResumeLayout(false);
+            this._topCommandPanel.PerformLayout();
+            this._groupCustomer.ResumeLayout(false);
+            this._groupCustomer.PerformLayout();
+            this._customerTable.ResumeLayout(false);
+            this._customerTable.PerformLayout();
+            this._groupResults.ResumeLayout(false);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 

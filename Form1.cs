@@ -28,7 +28,7 @@ namespace MilkAnalyzerTest
             InitializeComponent();
             InitializeSerial();
 
-            // Wire designer controls to handlers (safe for designer-time)
+            // Wire designer controls to handlers
             try { _testButton.Click += RunTestButton_Click; } catch { }
             try { _pdfButton.Click += PdfButton_Click; } catch { }
             try { _btnNewTest.Click += (s, e) => ClearParameterValues(); } catch { }
@@ -49,22 +49,6 @@ namespace MilkAnalyzerTest
 
             // adjust splitter initially
             try { if (_bottomSplit != null && _bottomSplit.Width > 0) _bottomSplit.SplitterDistance = _bottomSplit.Width / 2; } catch { }
-
-            // Handle runtime resizing for Right-anchored controls and splitter (do not put these in InitializeComponent)
-            this.Resize += MainForm_Resize;
-            // set initial positions
-            MainForm_Resize(this, EventArgs.Empty);
-        }
-
-        private void MainForm_Resize(object? sender, EventArgs e)
-        {
-            try
-            {
-                if (_btnPortToggle != null) _btnPortToggle.Left = Math.Max(0, this.ClientSize.Width - 260);
-                if (_btnSetLocation != null) _btnSetLocation.Left = Math.Max(0, this.ClientSize.Width - 170);
-                if (_bottomSplit != null && _bottomSplit.Width > 0) _bottomSplit.SplitterDistance = _bottomSplit.Width / 2;
-            }
-            catch { }
         }
 
         // Click handler for the top "Run Test Insert" button
