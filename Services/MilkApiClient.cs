@@ -69,6 +69,8 @@ namespace MilkAnalyzerTest.Services
             var body = await resp.Content.ReadAsStringAsync();
             if (!resp.IsSuccessStatusCode)
                 throw new InvalidOperationException($"Submit failed: {resp.StatusCode} - {body}");
+
+            //test github
         }
     }
 }
