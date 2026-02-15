@@ -202,19 +202,20 @@
             this.txtAddress.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtAddress.Multiline = true;
             this.txtAddress.Name = "txtAddress";
-            this.txtAddress.Size = new System.Drawing.Size(932, 81);
+            this.txtAddress.Size = new System.Drawing.Size(932, 151);
             this.txtAddress.TabIndex = 11;
             // 
             // btnStartTest
             // 
             this.btnStartTest.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btnStartTest.Location = new System.Drawing.Point(480, 260);
+            this.btnStartTest.Location = new System.Drawing.Point(370, 6);
             this.btnStartTest.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnStartTest.Name = "btnStartTest";
             this.btnStartTest.Size = new System.Drawing.Size(120, 28);
             this.btnStartTest.TabIndex = 12;
             this.btnStartTest.Text = "Start Test";
             this.btnStartTest.UseVisualStyleBackColor = true;
+            this.btnStartTest.Click += new System.EventHandler(this.btnStartTest_Click_1);
             // 
             // lblLocation
             // 
@@ -279,7 +280,7 @@
             this._bottomSplit.Dock = System.Windows.Forms.DockStyle.Fill;
             this._bottomSplit.Location = new System.Drawing.Point(8, 23);
             this._bottomSplit.Name = "_bottomSplit";
-            this._bottomSplit.Size = new System.Drawing.Size(1052, 282);
+            this._bottomSplit.Size = new System.Drawing.Size(1052, 212);
             this._bottomSplit.SplitterDistance = 848;
             this._bottomSplit.TabIndex = 0;
             // 
@@ -330,6 +331,7 @@
             // _topCommandPanel
             // 
             this._topCommandPanel.Controls.Add(this._testButton);
+            this._topCommandPanel.Controls.Add(this.btnStartTest);
             this._topCommandPanel.Controls.Add(this._btnNewTest);
             this._topCommandPanel.Controls.Add(this._pdfButton);
             this._topCommandPanel.Controls.Add(this._btnPortToggle);
@@ -349,7 +351,7 @@
             this._groupCustomer.Location = new System.Drawing.Point(0, 44);
             this._groupCustomer.Name = "_groupCustomer";
             this._groupCustomer.Padding = new System.Windows.Forms.Padding(10);
-            this._groupCustomer.Size = new System.Drawing.Size(1068, 210);
+            this._groupCustomer.Size = new System.Drawing.Size(1068, 280);
             this._groupCustomer.TabIndex = 13;
             this._groupCustomer.TabStop = false;
             this._groupCustomer.Text = "Customer Details";
@@ -385,17 +387,17 @@
             this._customerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
             this._customerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
             this._customerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this._customerTable.Size = new System.Drawing.Size(1048, 175);
+            this._customerTable.Size = new System.Drawing.Size(1048, 245);
             this._customerTable.TabIndex = 0;
             // 
             // _groupResults
             // 
             this._groupResults.Controls.Add(this._bottomSplit);
             this._groupResults.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._groupResults.Location = new System.Drawing.Point(0, 254);
+            this._groupResults.Location = new System.Drawing.Point(0, 324);
             this._groupResults.Name = "_groupResults";
             this._groupResults.Padding = new System.Windows.Forms.Padding(8);
-            this._groupResults.Size = new System.Drawing.Size(1068, 313);
+            this._groupResults.Size = new System.Drawing.Size(1068, 243);
             this._groupResults.TabIndex = 0;
             this._groupResults.TabStop = false;
             this._groupResults.Text = "Test Results";
@@ -406,7 +408,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1068, 567);
             this.Controls.Add(this._groupResults);
-            this.Controls.Add(this.btnStartTest);
             this.Controls.Add(this._groupCustomer);
             this.Controls.Add(this._topCommandPanel);
             this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);

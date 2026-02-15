@@ -616,7 +616,7 @@ namespace MilkAnalyzerTest
             else if (cnicNumber != null) qs.Append($"cnicNumber={Uri.EscapeDataString(cnicNumber)}");
             else if (email != null) qs.Append($"email={Uri.EscapeDataString(email)}");
 
-            var url = $"users/getProfileInfo?{qs}";
+            var url = $"users/profile/info?{qs}";
 
             using var resp = await http.GetAsync(url);
             if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
@@ -675,6 +675,11 @@ namespace MilkAnalyzerTest
         }
 
         private void MainForm_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnStartTest_Click_1(object sender, EventArgs e)
         {
 
         }
