@@ -215,6 +215,26 @@ namespace MilkAnalyzerTest.DataAccess
             return await ExecuteScalarAsync<int?>("SELECT TOP 1 Id FROM dbo.MilkTestResult WHERE ProfileId = @ProfileId ORDER BY TimestampUtc DESC", new SqlParameter("@ProfileId", SqlDbType.Int) { Value = profileId });
         }
 
+        // Return recent result ids and timestamps for a given profile (local DB fallback)
+        public static async Task<List<(int ResultId, DateTime TimestampUtc)>> GetResultsForProfileAsync(int profileId, int page = 1, int pageSize = 50)
+        {
+            var list = new List<(int ResultId, DateTime TimestampUtc)>();
+            var sql = @"SELECT Id, TimestampUtc FROM dbo.MilkTestResult WHERE ProfileId = @ProfileId ORDER BY TimestampUtc DESC OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+            var offset = (page - 1) * pageSize;
+
+            var rows = await QueryAsync(sql, reader =>
+            {
+                var id = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                var ts = reader.IsDBNull(1) ? DateTime.MinValue : reader.GetDateTime(1);
+                return (id, ts);
+            },
+            new SqlParameter("@ProfileId", SqlDbType.Int) { Value = profileId },
+            new SqlParameter("@Offset", SqlDbType.Int) { Value = offset },
+            new SqlParameter("@PageSize", SqlDbType.Int) { Value = pageSize });
+
+            return rows;
+        }
+
         // Return parameter names and values for a given result id
         public static async Task<List<(string ParameterName, double? Value)>> GetResultValuesByResultIdAsync(int resultId)
         {
@@ -231,6 +251,28 @@ namespace MilkAnalyzerTest.DataAccess
                 double? value = null;
                 if (!reader.IsDBNull(1)) value = reader.GetDouble(1);
                 return (name, value);
+            }, new SqlParameter("@ResultId", SqlDbType.Int) { Value = resultId });
+
+            return rows;
+        }
+
+        // Return parameter ids, names and values for a given result id
+        public static async Task<List<(int ParameterId, string ParameterName, double? Value)>> GetResultValuesWithIdsByResultIdAsync(int resultId)
+        {
+            var list = new List<(int ParameterId, string ParameterName, double? Value)>();
+            var sql = @"SELECT p.Id, p.Name, v.Value
+                        FROM dbo.MilkTestResultValues v
+                        INNER JOIN dbo.MilkAnalyzerParameters p ON v.ParameterId = p.Id
+                        WHERE v.ResultId = @ResultId
+                        ORDER BY p.SortOrder, p.Name";
+
+            var rows = await QueryAsync(sql, reader =>
+            {
+                var id = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                var name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                double? value = null;
+                if (!reader.IsDBNull(2)) value = reader.GetDouble(2);
+                return (id, name, value);
             }, new SqlParameter("@ResultId", SqlDbType.Int) { Value = resultId });
 
             return rows;

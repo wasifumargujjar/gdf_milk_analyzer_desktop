@@ -31,12 +31,9 @@ namespace MilkAnalyzerTest
             // Wire designer controls to handlers
             try { _testButton.Click += RunTestButton_Click; } catch { }
             try { _pdfButton.Click += PdfButton_Click; } catch { }
-            try { _btnNewTest.Click += (s, e) => ClearParameterValues(); } catch { }
+            try { _btnNewTest.Click += (s, e) => OnNewTestClicked(); } catch { }
             try { _btnPortToggle.Click += (s, e) => TogglePort(); UpdatePortButtonText(); } catch { }
             try { _btnSetLocation.Click += (s, e) => { using var dlg = new LocationPickerForm(); if (dlg.ShowDialog(this) == DialogResult.OK) { SetLocationText($"Location: {dlg.SelectedLocation}"); _btnSetLocation.Visible = false; } }; } catch { }
-
-            // Load analyzer parameters into parameter grids
-            _ = LoadAnalyzerParametersAsync();
 
             // Attach Enter key handlers to perform profile lookup
             try { txtPhone.KeyDown += LookupField_KeyDown; } catch { }
@@ -49,6 +46,14 @@ namespace MilkAnalyzerTest
 
             // adjust splitter initially
             try { if (_bottomSplit != null && _bottomSplit.Width > 0) _bottomSplit.SplitterDistance = _bottomSplit.Width / 2; } catch { }
+
+            // Load analyzer parameters into parameter grids moved to MainForm_Load
+            // initial button states
+            try { _pdfButton.Enabled = false; } catch { }
+            try { btnSendEmail.Enabled = false; } catch { }
+
+            // hook selection changed for previous tests grid
+            try { _gridPreviousTests.SelectionChanged += PreviousTests_SelectionChanged; } catch { }
         }
 
         // Click handler for the top "Run Test Insert" button
@@ -66,14 +71,42 @@ namespace MilkAnalyzerTest
 
         private async void BtnStartTest_Click(object? sender, EventArgs e)
         {
+            // Prevent double-clicks / concurrent runs
             try
             {
+                try { if (btnStartTest != null) btnStartTest.Enabled = false; } catch { }
+
                 var name = txtName.Text.Trim();
                 var nic = txtNIC.Text.Trim();
                 var phone = txtPhone.Text.Trim();
                 var email = txtEmail.Text.Trim();
                 var whatsapp = txtWhatsapp.Text.Trim();
                 var address = txtAddress.Text.Trim();
+
+                // Validation: require Name AND at least one of CNIC, Phone or Whatsapp
+                var hasContact = !string.IsNullOrWhiteSpace(nic) || !string.IsNullOrWhiteSpace(phone) || !string.IsNullOrWhiteSpace(whatsapp);
+                if (string.IsNullOrWhiteSpace(name) || !hasContact)
+                {
+                    MessageBox.Show("Please enter required fields: Name, and at least one of CNIC Number, Phone Number or Whatsapp Number.", "Missing Required Fields", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                    // set focus to first missing field for convenience
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        try { txtName.Focus(); } catch { }
+                    }
+                    else if (!hasContact)
+                    {
+                        try
+                        {
+                            if (string.IsNullOrWhiteSpace(nic)) txtNIC.Focus();
+                            else if (string.IsNullOrWhiteSpace(phone)) txtPhone.Focus();
+                            else txtWhatsapp.Focus();
+                        }
+                        catch { }
+                    }
+
+                    return;
+                }
 
                 object nicVal = string.IsNullOrWhiteSpace(nic) ? DBNull.Value : (object)nic;
                 object phoneVal = string.IsNullOrWhiteSpace(phone) ? DBNull.Value : (object)phone;
@@ -106,9 +139,9 @@ namespace MilkAnalyzerTest
                 }
                 else
                 {
-                    // Insert new
-                    await Database.ExecuteNonQueryAsync(
-                        "INSERT INTO dbo.Profile (Name, NIC, Phone, WhatsappNumber, Address, Email) VALUES (@Name, @NIC, @Phone, @Whatsapp, @Address, @Email);",
+                    // Insert new and return inserted id using SCOPE_IDENTITY()
+                    var newId = await Database.ExecuteScalarAsync<int?>(
+                        "INSERT INTO dbo.Profile (Name, NIC, Phone, WhatsappNumber, Address, Email) VALUES (@Name, @NIC, @Phone, @Whatsapp, @Address, @Email); SELECT CAST(SCOPE_IDENTITY() AS int);",
                         new SqlParameter("@Name", System.Data.SqlDbType.NVarChar, 200) { Value = (object?)name ?? DBNull.Value },
                         new SqlParameter("@NIC", System.Data.SqlDbType.NVarChar, 50) { Value = nicVal },
                         new SqlParameter("@Phone", System.Data.SqlDbType.NVarChar, 50) { Value = phoneVal },
@@ -116,10 +149,6 @@ namespace MilkAnalyzerTest
                         new SqlParameter("@Address", System.Data.SqlDbType.NVarChar, 500) { Value = (object?)address ?? DBNull.Value },
                         new SqlParameter("@Email", System.Data.SqlDbType.NVarChar, 200) { Value = emailVal }
                     );
-
-                    // retrieve newly inserted ID
-                    var newId = await Database.ExecuteScalarAsync<int?>("SELECT TOP 1 Id FROM dbo.Profile WHERE WhatsappNumber = @Whatsapp ORDER BY Id DESC",
-                        new SqlParameter("@Whatsapp", System.Data.SqlDbType.NVarChar, 50) { Value = whatsappVal });
 
                     if (!newId.HasValue)
                         throw new InvalidOperationException("Failed to retrieve newly created profile id.");
@@ -130,37 +159,194 @@ namespace MilkAnalyzerTest
                 // store current profile id for subsequent serial operations
                 _currentProfileId = profileId;
 
-                // After profile upsert, run the simulated serial test with the profileId
-                SerialSimulationTest.RunAndNotify(profileId);
+                // Run simulation (insert test data) but do NOT show additional message boxes here
+                long insertedTestId = await SerialSimulationTest.RunSimulationAsync(profileId);
 
-                // Load latest result values for this profile into grid
+                // Reload and display latest result values for the profile used (ensures grids/columns exist)
                 await LoadLatestResultsForProfileAsync(profileId);
 
-                MessageBox.Show("Profile saved and test started.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Create PDF report for the latest result
+                var latestId = await Database.GetLatestResultIdForProfileAsync(profileId);
+                string? pdfFilePath = null;
+                if (latestId.HasValue)
+                {
+                    var values = await Database.GetResultValuesByResultIdAsync(latestId.Value);
+                    var customerName = txtName.Text.Trim();
+                    var nicText = txtNIC.Text.Trim();
+                    var date = DateTime.UtcNow;
+
+                    // Ensure TestResults directory
+                    var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TestResults");
+                    Directory.CreateDirectory(dir);
+
+                    var fileName = $"MilkTest_{latestId.Value}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                    pdfFilePath = Path.Combine(dir, fileName);
+
+                    PdfReportGenerator.GeneratePdfReport(pdfFilePath, latestId.Value, customerName, nicText, date, values);
+                }
+
+                // Perform optional WhatsApp send and API submit similar to PdfButton_Click
+                var whatsappNumber = txtWhatsapp.Text.Trim();
+
+                string? waError = null;
+                string? apiError = null;
+
+                var waTask = Task.CompletedTask;
+                if (!string.IsNullOrWhiteSpace(whatsappNumber) && pdfFilePath != null)
+                {
+                    waTask = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await WhatsAppService.SendPdfReportToCustomerAsync(whatsappNumber, txtName.Text.Trim(), pdfFilePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            waError = ex.Message;
+                        }
+                    });
+                }
+
+                var apiTask = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var client = new MilkApiClient();
+                        var token = await client.LoginAsync("ali@milkanalyzer.com", "Ali123!");
+
+                        // Build submit DTO expected by the API
+                        var parameters = new System.Collections.Generic.List<object>();
+                        if (latestId.HasValue)
+                        {
+                            var values = await Database.GetResultValuesByResultIdAsync(latestId.Value);
+                            foreach (var v in values)
+                            {
+                                double? parsed = null;
+                                if (double.TryParse(Convert.ToString(v.Value), out var d)) parsed = d;
+                                parameters.Add(new { KeyName = v.ParameterName, Value = parsed });
+                            }
+                        }
+
+                        var submitDto = new
+                        {
+                            Email = txtEmail.Text.Trim(),
+                            PhoneNumber = txtPhone.Text.Trim(),
+                            FullName = txtName.Text.Trim(),
+                            RawLine = string.Empty,
+                            Parameters = parameters
+                        };
+
+                        await client.SubmitMilkTestAsync(token, submitDto);
+                    }
+                    catch (Exception ex)
+                    {
+                        apiError = ex.Message;
+                    }
+                });
+
+                await Task.WhenAll(waTask, apiTask);
+
+                // Single consolidated message at the end
+                if (waError == null && apiError == null)
+                {
+                    MessageBox.Show("Profile saved, test started, PDF created (if applicable), and external submissions completed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else if (waError == null && apiError != null)
+                {
+                    MessageBox.Show($"Profile saved and test started. PDF created (if applicable). API submit failed: {apiError}", "Partial Success", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else if (waError != null && apiError == null)
+                {
+                    MessageBox.Show($"Profile saved and test started. PDF created (if applicable). WhatsApp send failed: {waError}", "Partial Success", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else
+                {
+                    MessageBox.Show($"Profile saved and test started. PDF created (if applicable). Both WhatsApp and API submit failed. WhatsApp: {waError} | API: {apiError}", "Failure", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to save profile or start test: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                try { if (btnStartTest != null) btnStartTest.Enabled = true; } catch { }
+            }
+
+            // refresh previous tests
+            try { if (_currentProfileId.HasValue) await PopulatePreviousTestsAsync(_currentProfileId); else await PopulatePreviousTestsAsync(null); } catch { }
+        }
+
+        private async void PreviousTests_SelectionChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (_gridPreviousTests == null || _gridPreviousTests.SelectedRows.Count == 0)
+                {
+                    try { _pdfButton.Enabled = false; } catch { }
+                    try { btnSendEmail.Enabled = false; } catch { }
+                    return;
+                }
+
+                var row = _gridPreviousTests.SelectedRows[0];
+                if (row.Cells.Count == 0) return;
+                var idObj = row.Cells[0].Value;
+                if (idObj == null) return;
+                if (!int.TryParse(Convert.ToString(idObj), out var resultId)) return;
+
+                // populate params grid values from this result
+                var values = await Database.GetResultValuesWithIdsByResultIdAsync(resultId);
+                var map = new System.Collections.Generic.Dictionary<int, double?>();
+                foreach (var v in values) map[v.ParameterId] = v.Value;
+
+                foreach (DataGridViewRow prow in _gridParams.Rows)
+                {
+                    try
+                    {
+                        if (prow.Cells.Count < 3) continue;
+                        var pidObj = prow.Cells[0].Value;
+                        if (pidObj == null) { prow.Cells[2].Value = string.Empty; continue; }
+                        if (!int.TryParse(Convert.ToString(pidObj), out var pid)) { prow.Cells[2].Value = string.Empty; continue; }
+                        if (map.TryGetValue(pid, out var val)) prow.Cells[2].Value = val.HasValue ? val.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
+                        else prow.Cells[2].Value = string.Empty;
+                    }
+                    catch { }
+                }
+
+                // enable PDF send
+                try { _pdfButton.Enabled = true; } catch { }
+
+                // enable email if profile loaded and email present
+                try
+                {
+                    var hasEmail = !string.IsNullOrWhiteSpace(txtEmail.Text);
+                    btnSendEmail.Enabled = _currentProfileId.HasValue && hasEmail;
+                }
+                catch { }
+            }
+            catch { }
         }
 
         private async Task LoadAnalyzerParametersAsync()
         {
             try
             {
+                // Prepopulate designer parameter grid with Id and Name (Value empty)
                 _gridParams.Rows.Clear();
-                _gridAdulteration.Rows.Clear();
+                // clear previous tests grid; it will be populated from API/local DB
+                _gridPreviousTests.Rows.Clear();
 
-                var rows = await MilkAnalyzerTest.DataAccess.Database.QueryAsync<(string Name, string KeyName)>(
-                    "SELECT Name, KeyName FROM dbo.MilkAnalyzerParameters WHERE IsActive = 1 ORDER BY SortOrder, Name",
+                var rows = await MilkAnalyzerTest.DataAccess.Database.QueryAsync<(int Id, string Name, string KeyName)>(
+                    "SELECT Id, Name, KeyName FROM dbo.MilkAnalyzerParameters WHERE IsActive = 1 ORDER BY SortOrder, Name",
                     reader => (
-                        reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
-                        reader.IsDBNull(1) ? string.Empty : reader.GetString(1)));
+                        reader.IsDBNull(0) ? 0 : reader.GetInt32(0),
+                        reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                        reader.IsDBNull(2) ? string.Empty : reader.GetString(2)));
 
                 foreach (var r in rows)
                 {
-                    _gridParams.Rows.Add(r.Name, string.Empty);
-                    _gridAdulteration.Rows.Add(r.Name, string.Empty);
+                    // Designer columns: [ParameterId(hidden), Parameter(Name), Value]
+                    _gridParams.Rows.Add(r.Id, r.Name, string.Empty);
                 }
             }
             catch
@@ -175,16 +361,29 @@ namespace MilkAnalyzerTest
             {
                 foreach (DataGridViewRow row in _gridParams.Rows)
                 {
-                    if (row.Cells.Count > 1) row.Cells[1].Value = string.Empty;
+                    if (row.Cells.Count > 2) row.Cells[2].Value = string.Empty;
                 }
             }
-            if (_gridAdulteration != null)
+            // previous tests grid values are independent; do not clear rows here
+        }
+
+        private void OnNewTestClicked()
+        {
+            try
             {
-                foreach (DataGridViewRow row in _gridAdulteration.Rows)
-                {
-                    if (row.Cells.Count > 1) row.Cells[1].Value = string.Empty;
-                }
+                // Clear inputs
+                txtName.Text = string.Empty;
+                txtNIC.Text = string.Empty;
+                txtPhone.Text = string.Empty;
+                txtWhatsapp.Text = string.Empty;
+                txtEmail.Text = string.Empty;
+                txtAddress.Text = string.Empty;
+                _currentProfileId = null;
+
+                // Clear parameter value columns but keep names
+                ClearParameterValues();
             }
+            catch { }
         }
 
         private void TogglePort()
@@ -238,18 +437,40 @@ namespace MilkAnalyzerTest
         {
             try
             {
-                // Update parameter grids with latest result values
-                if (_gridParams != null) _gridParams.Rows.Clear();
-                if (_gridAdulteration != null) _gridAdulteration.Rows.Clear();
+                // Update parameter grids' Value column using parameter ids
+                if (_gridParams == null) return;
+                if (_gridParams.Rows.Count == 0) return; // nothing to map
+
                 var resultId = await Database.GetLatestResultIdForProfileAsync(profileId);
                 if (!resultId.HasValue) return;
 
-                var values = await Database.GetResultValuesByResultIdAsync(resultId.Value);
-                // Map by parameter name
+                var values = await Database.GetResultValuesWithIdsByResultIdAsync(resultId.Value);
+                // build map by parameter id
+                var map = new System.Collections.Generic.Dictionary<int, double?>();
                 foreach (var v in values)
                 {
-                    _gridParams.Rows.Add(v.ParameterName, v.Value?.ToString() ?? string.Empty);
-                    _gridAdulteration.Rows.Add(v.ParameterName, v.Value?.ToString() ?? string.Empty);
+                    map[v.ParameterId] = v.Value;
+                }
+
+                // For each row in _gridParams find matching param id in first cell and set value in third cell
+                foreach (DataGridViewRow row in _gridParams.Rows)
+                {
+                    try
+                    {
+                        if (row.Cells.Count < 3) continue;
+                        var pidObj = row.Cells[0].Value;
+                        if (pidObj == null) { row.Cells[2].Value = string.Empty; continue; }
+                        if (!int.TryParse(Convert.ToString(pidObj), out var pid)) { row.Cells[2].Value = string.Empty; continue; }
+                        if (map.TryGetValue(pid, out var val))
+                        {
+                            row.Cells[2].Value = val.HasValue ? val.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
+                        }
+                        else
+                        {
+                            row.Cells[2].Value = string.Empty;
+                        }
+                    }
+                    catch { }
                 }
             }
             catch (Exception ex)
@@ -257,6 +478,9 @@ namespace MilkAnalyzerTest
                 MessageBox.Show($"Failed to load results: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        // Keep design-time columns; runtime ensure not needed anymore
+        private void EnsureGridColumns(DataGridView? grid) { }
 
         // Initialize serial port and subscribe to data events
         private void InitializeSerial()
@@ -676,12 +900,109 @@ namespace MilkAnalyzerTest
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-
+            // call async loader and ignore
+            MainForm_LoadAsync(sender, e);
         }
 
-        private void btnStartTest_Click_1(object sender, EventArgs e)
+        private async void MainForm_LoadAsync(object sender, EventArgs e)
         {
+            // Load parameters after form creation
+            try
+            {
+                await LoadAnalyzerParametersAsync();
+                // populate previous tests (try API with token, fallback to local DB)
+                await PopulatePreviousTestsAsync(_currentProfileId);
+            }
+            catch (Exception ex)
+            {
+                try { MessageBox.Show($"Failed to load analyzer parameters: {ex.Message}", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning); } catch { }
+            }
+        }
 
+        // Populate the previous tests grid using API (my-results) using userId from token, fallback to local DB
+        private async Task PopulatePreviousTestsAsync(int? profileId)
+        {
+            try
+            {
+                // Clear grid
+                _gridPreviousTests.Rows.Clear();
+
+                // Try API using token to extract userId
+                int? userIdFromToken = null;
+                try
+                {
+                    var token = MilkAnalyzerTest.Services.TokenStore.Token;
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        var parts = token.Split('.');
+                        if (parts.Length >= 2)
+                        {
+                            var payload = parts[1];
+                            var padded = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+                            var bytes = Convert.FromBase64String(padded.Replace('-', '+').Replace('_', '/'));
+                            var json = System.Text.Encoding.UTF8.GetString(bytes);
+                            using var doc = JsonDocument.Parse(json);
+                            if (doc.RootElement.TryGetProperty("id", out var idElem) && idElem.ValueKind == JsonValueKind.Number)
+                            {
+                                userIdFromToken = idElem.GetInt32();
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                bool loadedFromApi = false;
+                if (userIdFromToken.HasValue)
+                {
+                    try
+                    {
+                        var client = new MilkAnalyzerTest.Services.MilkApiClient();
+                        // call my-results?userId=...
+                        using var http = new System.Net.Http.HttpClient();
+                        var baseUrl = MilkAnalyzerTest.Config.Settings.ApiBaseUrl ?? string.Empty;
+                        if (!baseUrl.EndsWith("/")) baseUrl += '/';
+                        http.BaseAddress = new Uri(baseUrl);
+                        var reqUrl = $"my-results?userId={userIdFromToken.Value}&page=1&pageSize=50";
+                        using var req = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, reqUrl);
+                        var token = MilkAnalyzerTest.Services.TokenStore.Token;
+                        if (!string.IsNullOrWhiteSpace(token)) req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                        using var resp = await http.SendAsync(req);
+                        if (resp.IsSuccessStatusCode)
+                        {
+                            var body = await resp.Content.ReadAsStringAsync();
+                            using var doc = JsonDocument.Parse(body);
+                            // assume root is array or { data: [ ... ] }
+                            var arr = doc.RootElement.ValueKind == JsonValueKind.Array ? doc.RootElement : (doc.RootElement.TryGetProperty("data", out var d) ? d : default(JsonElement));
+                            if (arr.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var item in arr.EnumerateArray())
+                                {
+                                    var id = item.TryGetProperty("id", out var idp) && idp.ValueKind == JsonValueKind.Number ? idp.GetInt32() : 0;
+                                    var ts = item.TryGetProperty("timestampUtc", out var tsp) && tsp.ValueKind == JsonValueKind.String ? tsp.GetString() : null;
+                                    var display = ts ?? item.ToString();
+                                    _gridPreviousTests.Rows.Add(id, display, string.Empty);
+                                }
+                                loadedFromApi = true;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                if (!loadedFromApi)
+                {
+                    // fallback to local DB using profileId
+                    if (profileId.HasValue)
+                    {
+                        var rows = await Database.GetResultsForProfileAsync(profileId.Value);
+                        foreach (var r in rows)
+                        {
+                            _gridPreviousTests.Rows.Add(r.ResultId, r.TimestampUtc.ToString("s"), string.Empty);
+                        }
+                    }
+                }
+            }
+            catch { }
         }
     }
 }

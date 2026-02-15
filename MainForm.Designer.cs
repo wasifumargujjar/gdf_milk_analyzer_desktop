@@ -17,16 +17,13 @@
         private System.Windows.Forms.TextBox txtEmail;
         private System.Windows.Forms.Label lblEmail;
         private System.Windows.Forms.Label lblLocation;
-
-        // Controls added so they are visible at design time
-        private System.Windows.Forms.Button _testButton;
         private System.Windows.Forms.Button _pdfButton;
         private System.Windows.Forms.Button _btnNewTest;
         private System.Windows.Forms.Button _btnPortToggle;
         private System.Windows.Forms.Button _btnSetLocation;
         private System.Windows.Forms.SplitContainer _bottomSplit;
         private System.Windows.Forms.DataGridView _gridParams;
-        private System.Windows.Forms.DataGridView _gridAdulteration;
+        private System.Windows.Forms.DataGridView _gridPreviousTests;
         private System.Windows.Forms.Label lblCustomerType;
         private System.Windows.Forms.ComboBox cmbCustomerType;
 
@@ -71,24 +68,33 @@
             this.txtAddress = new System.Windows.Forms.TextBox();
             this.btnStartTest = new System.Windows.Forms.Button();
             this.lblLocation = new System.Windows.Forms.Label();
-            this._testButton = new System.Windows.Forms.Button();
             this._pdfButton = new System.Windows.Forms.Button();
             this._btnNewTest = new System.Windows.Forms.Button();
             this._btnPortToggle = new System.Windows.Forms.Button();
             this._btnSetLocation = new System.Windows.Forms.Button();
             this._bottomSplit = new System.Windows.Forms.SplitContainer();
             this._gridParams = new System.Windows.Forms.DataGridView();
-            this._gridAdulteration = new System.Windows.Forms.DataGridView();
+            this.ParameterId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Parameter = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this._gridPreviousTests = new System.Windows.Forms.DataGridView();
+            this.ResultId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.TestDateTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Summary = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.lblCustomerType = new System.Windows.Forms.Label();
             this.cmbCustomerType = new System.Windows.Forms.ComboBox();
             this._topCommandPanel = new System.Windows.Forms.Panel();
+            this.btnSendEmail = new System.Windows.Forms.Button();
+            this._testButton = new System.Windows.Forms.Button();
             this._groupCustomer = new System.Windows.Forms.GroupBox();
             this._customerTable = new System.Windows.Forms.TableLayoutPanel();
             this._groupResults = new System.Windows.Forms.GroupBox();
             ((System.ComponentModel.ISupportInitialize)(this._bottomSplit)).BeginInit();
+            this._bottomSplit.Panel1.SuspendLayout();
+            this._bottomSplit.Panel2.SuspendLayout();
             this._bottomSplit.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._gridParams)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this._gridAdulteration)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this._gridPreviousTests)).BeginInit();
             this._topCommandPanel.SuspendLayout();
             this._groupCustomer.SuspendLayout();
             this._customerTable.SuspendLayout();
@@ -207,15 +213,15 @@
             // 
             // btnStartTest
             // 
-            this.btnStartTest.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btnStartTest.Location = new System.Drawing.Point(370, 6);
+            this.btnStartTest.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnStartTest.Location = new System.Drawing.Point(108, 8);
             this.btnStartTest.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnStartTest.Name = "btnStartTest";
             this.btnStartTest.Size = new System.Drawing.Size(120, 28);
             this.btnStartTest.TabIndex = 12;
             this.btnStartTest.Text = "Start Test";
             this.btnStartTest.UseVisualStyleBackColor = true;
-            this.btnStartTest.Click += new System.EventHandler(this.btnStartTest_Click_1);
+            this.btnStartTest.Click += new System.EventHandler(this.BtnStartTest_Click);
             // 
             // lblLocation
             // 
@@ -227,27 +233,20 @@
             this.lblLocation.TabIndex = 12;
             this.lblLocation.Text = "Location: fetching...";
             // 
-            // _testButton
-            // 
-            this._testButton.Location = new System.Drawing.Point(8, 8);
-            this._testButton.Name = "_testButton";
-            this._testButton.Size = new System.Drawing.Size(120, 28);
-            this._testButton.TabIndex = 13;
-            this._testButton.Text = "Run Test Insert";
-            this._testButton.UseVisualStyleBackColor = true;
-            // 
             // _pdfButton
             // 
-            this._pdfButton.Location = new System.Drawing.Point(244, 8);
+            this._pdfButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this._pdfButton.Location = new System.Drawing.Point(940, 8);
             this._pdfButton.Name = "_pdfButton";
             this._pdfButton.Size = new System.Drawing.Size(120, 28);
             this._pdfButton.TabIndex = 17;
-            this._pdfButton.Text = "Generate PDF";
+            this._pdfButton.Text = "Send PDF";
             this._pdfButton.UseVisualStyleBackColor = true;
             // 
             // _btnNewTest
             // 
-            this._btnNewTest.Location = new System.Drawing.Point(136, 8);
+            this._btnNewTest.Dock = System.Windows.Forms.DockStyle.Left;
+            this._btnNewTest.Location = new System.Drawing.Point(8, 8);
             this._btnNewTest.Name = "_btnNewTest";
             this._btnNewTest.Size = new System.Drawing.Size(100, 28);
             this._btnNewTest.TabIndex = 14;
@@ -280,6 +279,14 @@
             this._bottomSplit.Dock = System.Windows.Forms.DockStyle.Fill;
             this._bottomSplit.Location = new System.Drawing.Point(8, 23);
             this._bottomSplit.Name = "_bottomSplit";
+            // 
+            // _bottomSplit.Panel1
+            // 
+            this._bottomSplit.Panel1.Controls.Add(this._gridParams);
+            // 
+            // _bottomSplit.Panel2
+            // 
+            this._bottomSplit.Panel2.Controls.Add(this._gridPreviousTests);
             this._bottomSplit.Size = new System.Drawing.Size(1052, 212);
             this._bottomSplit.SplitterDistance = 848;
             this._bottomSplit.TabIndex = 0;
@@ -289,28 +296,76 @@
             this._gridParams.AllowUserToAddRows = false;
             this._gridParams.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this._gridParams.ColumnHeadersHeight = 32;
+            this._gridParams.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ParameterId,
+            this.Parameter,
+            this.Value});
             this._gridParams.Dock = System.Windows.Forms.DockStyle.Fill;
             this._gridParams.Location = new System.Drawing.Point(0, 0);
             this._gridParams.Name = "_gridParams";
             this._gridParams.RowHeadersVisible = false;
             this._gridParams.RowHeadersWidth = 57;
             this._gridParams.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this._gridParams.Size = new System.Drawing.Size(240, 150);
+            this._gridParams.Size = new System.Drawing.Size(848, 212);
             this._gridParams.TabIndex = 0;
             // 
-            // _gridAdulteration
+            // ParameterId
             // 
-            this._gridAdulteration.AllowUserToAddRows = false;
-            this._gridAdulteration.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this._gridAdulteration.ColumnHeadersHeight = 32;
-            this._gridAdulteration.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._gridAdulteration.Location = new System.Drawing.Point(0, 0);
-            this._gridAdulteration.Name = "_gridAdulteration";
-            this._gridAdulteration.RowHeadersVisible = false;
-            this._gridAdulteration.RowHeadersWidth = 57;
-            this._gridAdulteration.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this._gridAdulteration.Size = new System.Drawing.Size(240, 150);
-            this._gridAdulteration.TabIndex = 0;
+            this.ParameterId.HeaderText = "Id";
+            this.ParameterId.MinimumWidth = 6;
+            this.ParameterId.Name = "ParameterId";
+            this.ParameterId.Visible = false;
+            // 
+            // Parameter
+            // 
+            this.Parameter.HeaderText = "Parameter";
+            this.Parameter.MinimumWidth = 6;
+            this.Parameter.Name = "Parameter";
+            this.Parameter.ReadOnly = true;
+            // 
+            // Value
+            // 
+            this.Value.HeaderText = "Value";
+            this.Value.MinimumWidth = 6;
+            this.Value.Name = "Value";
+            // 
+            // _gridPreviousTests
+            // 
+            this._gridPreviousTests.AllowUserToAddRows = false;
+            this._gridPreviousTests.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this._gridPreviousTests.ColumnHeadersHeight = 32;
+            this._gridPreviousTests.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ResultId,
+            this.TestDateTime,
+            this.Summary});
+            this._gridPreviousTests.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._gridPreviousTests.Location = new System.Drawing.Point(0, 0);
+            this._gridPreviousTests.Name = "_gridPreviousTests";
+            this._gridPreviousTests.RowHeadersVisible = false;
+            this._gridPreviousTests.RowHeadersWidth = 57;
+            this._gridPreviousTests.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this._gridPreviousTests.Size = new System.Drawing.Size(200, 212);
+            this._gridPreviousTests.TabIndex = 0;
+            // 
+            // ResultId
+            // 
+            this.ResultId.HeaderText = "ResultId";
+            this.ResultId.MinimumWidth = 6;
+            this.ResultId.Name = "ResultId";
+            this.ResultId.Visible = false;
+            // 
+            // TestDateTime
+            // 
+            this.TestDateTime.HeaderText = "Date/Time";
+            this.TestDateTime.MinimumWidth = 6;
+            this.TestDateTime.Name = "TestDateTime";
+            this.TestDateTime.ReadOnly = true;
+            // 
+            // Summary
+            // 
+            this.Summary.HeaderText = "Summary";
+            this.Summary.MinimumWidth = 6;
+            this.Summary.Name = "Summary";
             // 
             // lblCustomerType
             // 
@@ -330,6 +385,7 @@
             // 
             // _topCommandPanel
             // 
+            this._topCommandPanel.Controls.Add(this.btnSendEmail);
             this._topCommandPanel.Controls.Add(this._testButton);
             this._topCommandPanel.Controls.Add(this.btnStartTest);
             this._topCommandPanel.Controls.Add(this._btnNewTest);
@@ -343,6 +399,27 @@
             this._topCommandPanel.Padding = new System.Windows.Forms.Padding(8);
             this._topCommandPanel.Size = new System.Drawing.Size(1068, 44);
             this._topCommandPanel.TabIndex = 14;
+            // 
+            // btnSendEmail
+            // 
+            this.btnSendEmail.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnSendEmail.Location = new System.Drawing.Point(700, 8);
+            this.btnSendEmail.Name = "btnSendEmail";
+            this.btnSendEmail.Size = new System.Drawing.Size(120, 28);
+            this.btnSendEmail.TabIndex = 18;
+            this.btnSendEmail.Text = "Send Email";
+            this.btnSendEmail.UseVisualStyleBackColor = true;
+            // 
+            // _testButton
+            // 
+            this._testButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this._testButton.Location = new System.Drawing.Point(820, 8);
+            this._testButton.Name = "_testButton";
+            this._testButton.Size = new System.Drawing.Size(120, 28);
+            this._testButton.TabIndex = 13;
+            this._testButton.Text = "Run Test Insert";
+            this._testButton.UseVisualStyleBackColor = true;
+            this._testButton.Visible = false;
             // 
             // _groupCustomer
             // 
@@ -415,10 +492,12 @@
             this.Text = "Milk Test";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.MainForm_Load);
+            this._bottomSplit.Panel1.ResumeLayout(false);
+            this._bottomSplit.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._bottomSplit)).EndInit();
             this._bottomSplit.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._gridParams)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this._gridAdulteration)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this._gridPreviousTests)).EndInit();
             this._topCommandPanel.ResumeLayout(false);
             this._topCommandPanel.PerformLayout();
             this._groupCustomer.ResumeLayout(false);
@@ -431,5 +510,14 @@
         }
 
         #endregion
+
+        private System.Windows.Forms.Button btnSendEmail;
+        private System.Windows.Forms.Button _testButton;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ParameterId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Parameter;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Value;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ResultId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn TestDateTime;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Summary;
     }
 }

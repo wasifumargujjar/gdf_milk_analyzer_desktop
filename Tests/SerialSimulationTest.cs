@@ -20,12 +20,12 @@ namespace MilkAnalyzerTest.Tests
             // Simulated raw message from serial device
             var rawMessage = "SIMTEST|ID=1001;FAT=3.5;PROTEIN=3.2;LACTOSE=4.6";
 
-            // Create sample parsed values
+            // Create sample parsed values using KeyName values that match seeded MilkAnalyzerParameters
             var values = new List<(string name, string value, string type)>
             {
-                ("fat", "3.5", "float"),
-                ("protein", "3.2", "float"),
-                ("water", "4.6", "float"),
+                ("dummy_fat", "3.5", "float"),
+                ("dummy_protein", "3.2", "float"),
+                ("dummy_lactose", "4.6", "float"),
             };
 
             // Insert using existing Database helper (pass profileId)
