@@ -32,6 +32,7 @@
         private System.Windows.Forms.GroupBox _groupCustomer;
         private System.Windows.Forms.TableLayoutPanel _customerTable;
         private System.Windows.Forms.GroupBox _groupResults;
+        private System.Windows.Forms.GroupBox _groupActions;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -73,14 +74,14 @@
             this._btnPortToggle = new System.Windows.Forms.Button();
             this._btnSetLocation = new System.Windows.Forms.Button();
             this._bottomSplit = new System.Windows.Forms.SplitContainer();
-            this._gridParams = new System.Windows.Forms.DataGridView();
-            this.ParameterId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Parameter = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this._gridPreviousTests = new System.Windows.Forms.DataGridView();
             this.ResultId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.TestDateTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Summary = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this._gridParams = new System.Windows.Forms.DataGridView();
+            this.ParameterId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Parameter = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.lblCustomerType = new System.Windows.Forms.Label();
             this.cmbCustomerType = new System.Windows.Forms.ComboBox();
             this._topCommandPanel = new System.Windows.Forms.Panel();
@@ -89,16 +90,18 @@
             this._groupCustomer = new System.Windows.Forms.GroupBox();
             this._customerTable = new System.Windows.Forms.TableLayoutPanel();
             this._groupResults = new System.Windows.Forms.GroupBox();
+            this._groupActions = new System.Windows.Forms.GroupBox();
             ((System.ComponentModel.ISupportInitialize)(this._bottomSplit)).BeginInit();
             this._bottomSplit.Panel1.SuspendLayout();
             this._bottomSplit.Panel2.SuspendLayout();
             this._bottomSplit.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this._gridParams)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this._gridPreviousTests)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this._gridParams)).BeginInit();
             this._topCommandPanel.SuspendLayout();
             this._groupCustomer.SuspendLayout();
             this._customerTable.SuspendLayout();
             this._groupResults.SuspendLayout();
+            this._groupActions.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblName
@@ -236,9 +239,9 @@
             // _pdfButton
             // 
             this._pdfButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this._pdfButton.Location = new System.Drawing.Point(940, 8);
+            this._pdfButton.Location = new System.Drawing.Point(940, 23);
             this._pdfButton.Name = "_pdfButton";
-            this._pdfButton.Size = new System.Drawing.Size(120, 28);
+            this._pdfButton.Size = new System.Drawing.Size(120, 37);
             this._pdfButton.TabIndex = 17;
             this._pdfButton.Text = "Send PDF";
             this._pdfButton.UseVisualStyleBackColor = true;
@@ -282,52 +285,14 @@
             // 
             // _bottomSplit.Panel1
             // 
-            this._bottomSplit.Panel1.Controls.Add(this._gridParams);
+            this._bottomSplit.Panel1.Controls.Add(this._gridPreviousTests);
             // 
             // _bottomSplit.Panel2
             // 
-            this._bottomSplit.Panel2.Controls.Add(this._gridPreviousTests);
-            this._bottomSplit.Size = new System.Drawing.Size(1052, 212);
-            this._bottomSplit.SplitterDistance = 848;
+            this._bottomSplit.Panel2.Controls.Add(this._gridParams);
+            this._bottomSplit.Size = new System.Drawing.Size(1052, 144);
+            this._bottomSplit.SplitterDistance = 526;
             this._bottomSplit.TabIndex = 0;
-            // 
-            // _gridParams
-            // 
-            this._gridParams.AllowUserToAddRows = false;
-            this._gridParams.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this._gridParams.ColumnHeadersHeight = 32;
-            this._gridParams.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ParameterId,
-            this.Parameter,
-            this.Value});
-            this._gridParams.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._gridParams.Location = new System.Drawing.Point(0, 0);
-            this._gridParams.Name = "_gridParams";
-            this._gridParams.RowHeadersVisible = false;
-            this._gridParams.RowHeadersWidth = 57;
-            this._gridParams.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this._gridParams.Size = new System.Drawing.Size(848, 212);
-            this._gridParams.TabIndex = 0;
-            // 
-            // ParameterId
-            // 
-            this.ParameterId.HeaderText = "Id";
-            this.ParameterId.MinimumWidth = 6;
-            this.ParameterId.Name = "ParameterId";
-            this.ParameterId.Visible = false;
-            // 
-            // Parameter
-            // 
-            this.Parameter.HeaderText = "Parameter";
-            this.Parameter.MinimumWidth = 6;
-            this.Parameter.Name = "Parameter";
-            this.Parameter.ReadOnly = true;
-            // 
-            // Value
-            // 
-            this.Value.HeaderText = "Value";
-            this.Value.MinimumWidth = 6;
-            this.Value.Name = "Value";
             // 
             // _gridPreviousTests
             // 
@@ -344,7 +309,7 @@
             this._gridPreviousTests.RowHeadersVisible = false;
             this._gridPreviousTests.RowHeadersWidth = 57;
             this._gridPreviousTests.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this._gridPreviousTests.Size = new System.Drawing.Size(200, 212);
+            this._gridPreviousTests.Size = new System.Drawing.Size(526, 144);
             this._gridPreviousTests.TabIndex = 0;
             // 
             // ResultId
@@ -367,6 +332,44 @@
             this.Summary.MinimumWidth = 6;
             this.Summary.Name = "Summary";
             // 
+            // _gridParams
+            // 
+            this._gridParams.AllowUserToAddRows = false;
+            this._gridParams.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this._gridParams.ColumnHeadersHeight = 32;
+            this._gridParams.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ParameterId,
+            this.Parameter,
+            this.Value});
+            this._gridParams.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._gridParams.Location = new System.Drawing.Point(0, 0);
+            this._gridParams.Name = "_gridParams";
+            this._gridParams.RowHeadersVisible = false;
+            this._gridParams.RowHeadersWidth = 57;
+            this._gridParams.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this._gridParams.Size = new System.Drawing.Size(522, 144);
+            this._gridParams.TabIndex = 0;
+            // 
+            // ParameterId
+            // 
+            this.ParameterId.HeaderText = "Id";
+            this.ParameterId.MinimumWidth = 6;
+            this.ParameterId.Name = "ParameterId";
+            this.ParameterId.Visible = false;
+            // 
+            // Parameter
+            // 
+            this.Parameter.HeaderText = "Parameter";
+            this.Parameter.MinimumWidth = 6;
+            this.Parameter.Name = "Parameter";
+            this.Parameter.ReadOnly = true;
+            // 
+            // Value
+            // 
+            this.Value.HeaderText = "Value";
+            this.Value.MinimumWidth = 6;
+            this.Value.Name = "Value";
+            // 
             // lblCustomerType
             // 
             this.lblCustomerType.AutoSize = true;
@@ -385,11 +388,8 @@
             // 
             // _topCommandPanel
             // 
-            this._topCommandPanel.Controls.Add(this.btnSendEmail);
-            this._topCommandPanel.Controls.Add(this._testButton);
             this._topCommandPanel.Controls.Add(this.btnStartTest);
             this._topCommandPanel.Controls.Add(this._btnNewTest);
-            this._topCommandPanel.Controls.Add(this._pdfButton);
             this._topCommandPanel.Controls.Add(this._btnPortToggle);
             this._topCommandPanel.Controls.Add(this._btnSetLocation);
             this._topCommandPanel.Controls.Add(this.lblLocation);
@@ -403,9 +403,9 @@
             // btnSendEmail
             // 
             this.btnSendEmail.Dock = System.Windows.Forms.DockStyle.Right;
-            this.btnSendEmail.Location = new System.Drawing.Point(700, 8);
+            this.btnSendEmail.Location = new System.Drawing.Point(700, 23);
             this.btnSendEmail.Name = "btnSendEmail";
-            this.btnSendEmail.Size = new System.Drawing.Size(120, 28);
+            this.btnSendEmail.Size = new System.Drawing.Size(120, 37);
             this.btnSendEmail.TabIndex = 18;
             this.btnSendEmail.Text = "Send Email";
             this.btnSendEmail.UseVisualStyleBackColor = true;
@@ -413,9 +413,9 @@
             // _testButton
             // 
             this._testButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this._testButton.Location = new System.Drawing.Point(820, 8);
+            this._testButton.Location = new System.Drawing.Point(820, 23);
             this._testButton.Name = "_testButton";
-            this._testButton.Size = new System.Drawing.Size(120, 28);
+            this._testButton.Size = new System.Drawing.Size(120, 37);
             this._testButton.TabIndex = 13;
             this._testButton.Text = "Run Test Insert";
             this._testButton.UseVisualStyleBackColor = true;
@@ -471,13 +471,27 @@
             // 
             this._groupResults.Controls.Add(this._bottomSplit);
             this._groupResults.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._groupResults.Location = new System.Drawing.Point(0, 324);
+            this._groupResults.Location = new System.Drawing.Point(0, 392);
             this._groupResults.Name = "_groupResults";
             this._groupResults.Padding = new System.Windows.Forms.Padding(8);
-            this._groupResults.Size = new System.Drawing.Size(1068, 243);
+            this._groupResults.Size = new System.Drawing.Size(1068, 175);
             this._groupResults.TabIndex = 0;
             this._groupResults.TabStop = false;
             this._groupResults.Text = "Test Results";
+            // 
+            // _groupActions
+            // 
+            this._groupActions.Controls.Add(this.btnSendEmail);
+            this._groupActions.Controls.Add(this._testButton);
+            this._groupActions.Controls.Add(this._pdfButton);
+            this._groupActions.Dock = System.Windows.Forms.DockStyle.Top;
+            this._groupActions.Location = new System.Drawing.Point(0, 324);
+            this._groupActions.Name = "_groupActions";
+            this._groupActions.Padding = new System.Windows.Forms.Padding(8);
+            this._groupActions.Size = new System.Drawing.Size(1068, 68);
+            this._groupActions.TabIndex = 15;
+            this._groupActions.TabStop = false;
+            this._groupActions.Text = "Actions";
             // 
             // MainForm
             // 
@@ -485,6 +499,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1068, 567);
             this.Controls.Add(this._groupResults);
+            this.Controls.Add(this._groupActions);
             this.Controls.Add(this._groupCustomer);
             this.Controls.Add(this._topCommandPanel);
             this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
@@ -496,8 +511,8 @@
             this._bottomSplit.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._bottomSplit)).EndInit();
             this._bottomSplit.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this._gridParams)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this._gridPreviousTests)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this._gridParams)).EndInit();
             this._topCommandPanel.ResumeLayout(false);
             this._topCommandPanel.PerformLayout();
             this._groupCustomer.ResumeLayout(false);
@@ -505,6 +520,7 @@
             this._customerTable.ResumeLayout(false);
             this._customerTable.PerformLayout();
             this._groupResults.ResumeLayout(false);
+            this._groupActions.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }

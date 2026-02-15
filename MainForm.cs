@@ -11,6 +11,8 @@ using Microsoft.Data.SqlClient;
 using System.Net.Http;
 using System.Text.Json;
 using System.Device.Location;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace MilkAnalyzerTest
 {
@@ -274,7 +276,7 @@ namespace MilkAnalyzerTest
             }
 
             // refresh previous tests
-            try { if (_currentProfileId.HasValue) await PopulatePreviousTestsAsync(_currentProfileId); else await PopulatePreviousTestsAsync(null); } catch { }
+            try { if (_currentProfileId.HasValue) await PopulatePreviousTestsAsync(_currentProfileId, true); else await PopulatePreviousTestsAsync(null); } catch { }
         }
 
         private async void PreviousTests_SelectionChanged(object? sender, EventArgs e)
@@ -382,6 +384,13 @@ namespace MilkAnalyzerTest
 
                 // Clear parameter value columns but keep names
                 ClearParameterValues();
+
+                // Clear previous tests list
+                try { if (_gridPreviousTests != null) _gridPreviousTests.Rows.Clear(); } catch { }
+
+                // Disable actions until a test/profile is selected
+                try { _pdfButton.Enabled = false; } catch { }
+                try { btnSendEmail.Enabled = false; } catch { }
             }
             catch { }
         }
@@ -805,6 +814,9 @@ namespace MilkAnalyzerTest
                     if (!string.IsNullOrWhiteSpace(info.Email)) txtEmail.Text = info.Email;
                     if (info.Id.HasValue) _currentProfileId = info.Id.Value;
                     if (!string.IsNullOrWhiteSpace(info.Phone)) _lastPhoneLookupValue = info.Phone;
+
+                    // Load previous tests for this profile and select latest (try API then DB fallback)
+                    try { await PopulatePreviousTestsAsync(info.Id, true); } catch (Exception ex) { Debug.WriteLine($"PopulatePreviousTestsAsync failed: {ex}"); }
                 }
             }
             catch (Exception ex)
@@ -847,17 +859,33 @@ namespace MilkAnalyzerTest
 
             resp.EnsureSuccessStatusCode();
             var body = await resp.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(body);
-            var root = doc.RootElement;
 
-            var info = new ProfileInfo();
-            if (root.TryGetProperty("Id", out var idElem) && idElem.ValueKind == JsonValueKind.Number) info.Id = idElem.GetInt32();
-            info.FullName = root.TryGetProperty("fullName", out var fn) ? fn.GetString() : (root.TryGetProperty("userName", out var un) ? un.GetString() : null);
-            info.Email = root.TryGetProperty("email", out var em) ? em.GetString() : null;
-            info.Phone = root.TryGetProperty("phoneNumber", out var pn) ? pn.GetString() : null;
-            info.Cnic = root.TryGetProperty("cnicNumber", out var cn) ? cn.GetString() : (root.TryGetProperty("cNICNumber", out var cn2) ? cn2.GetString() : null);
+            try
+            {
+                using var doc = JsonDocument.Parse(body);
+                var root = doc.RootElement;
 
-            return info;
+                var info = new ProfileInfo();
+
+                // Accept multiple possible id property names
+                if (root.TryGetProperty("Id", out var idElem) && idElem.ValueKind == JsonValueKind.Number) info.Id = idElem.GetInt32();
+                else if (root.TryGetProperty("id", out var idElem2) && idElem2.ValueKind == JsonValueKind.Number) info.Id = idElem2.GetInt32();
+                else if (root.TryGetProperty("userId", out var idElem3) && idElem3.ValueKind == JsonValueKind.Number) info.Id = idElem3.GetInt32();
+                else if (root.TryGetProperty("user_id", out var idElem4) && idElem4.ValueKind == JsonValueKind.Number) info.Id = idElem4.GetInt32();
+                else if (root.TryGetProperty("sub", out var idElem5) && idElem5.ValueKind == JsonValueKind.Number) info.Id = idElem5.GetInt32();
+
+                info.FullName = root.TryGetProperty("fullName", out var fn) ? fn.GetString() : (root.TryGetProperty("userName", out var un) ? un.GetString() : null);
+                info.Email = root.TryGetProperty("email", out var em) ? em.GetString() : null;
+                info.Phone = root.TryGetProperty("phoneNumber", out var pn) ? pn.GetString() : null;
+                info.Cnic = root.TryGetProperty("cnicNumber", out var cn) ? cn.GetString() : (root.TryGetProperty("cNICNumber", out var cn2) ? cn2.GetString() : null);
+
+                return info;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"TryAutoFillProfileAsync: failed to parse profile response: {ex}");
+                return null;
+            }
         }
 
         // Called when phone textbox loses focus; performs lookup if value changed and none in-flight
@@ -886,7 +914,18 @@ namespace MilkAnalyzerTest
                                 if (!string.IsNullOrWhiteSpace(info.Email)) txtEmail.Text = info.Email;
                                 if (info.Id.HasValue) _currentProfileId = info.Id.Value;
                                 if (!string.IsNullOrWhiteSpace(info.Phone)) _lastPhoneLookupValue = info.Phone;
+                                // enable Send Email if email available
+                                try { btnSendEmail.Enabled = info.Id.HasValue && !string.IsNullOrWhiteSpace(info.Email); } catch { }
                             })); } catch { }
+                            // After autofill, load previous tests for this profile and select latest
+                            try
+                            {
+                                BeginInvoke((Action)(() => { _ = PopulatePreviousTestsAsync(info.Id, true); }));
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"PopulatePreviousTestsAsync invoke failed: {ex}");
+                            }
                         }
                     }
                     finally
@@ -920,7 +959,7 @@ namespace MilkAnalyzerTest
         }
 
         // Populate the previous tests grid using API (my-results) using userId from token, fallback to local DB
-        private async Task PopulatePreviousTestsAsync(int? profileId)
+        private async Task PopulatePreviousTestsAsync(int? profileId, bool selectLatest = false)
         {
             try
             {
@@ -991,15 +1030,58 @@ namespace MilkAnalyzerTest
 
                 if (!loadedFromApi)
                 {
-                    // fallback to local DB using profileId
-                    if (profileId.HasValue)
+                    // fallback to local DB: determine profile id (use provided profileId or lookup by phone)
+                    int? pidToUse = profileId;
+                    if (!pidToUse.HasValue)
                     {
-                        var rows = await Database.GetResultsForProfileAsync(profileId.Value);
+                        try
+                        {
+                            var phone = txtPhone?.Text?.Trim();
+                            if (!string.IsNullOrWhiteSpace(phone))
+                            {
+                                // Normalize phone by removing non-digits for lookup
+                                var norm = Regex.Replace(phone, "\\D", string.Empty);
+                                if (string.IsNullOrWhiteSpace(norm)) norm = phone;
+
+                                pidToUse = await Database.ExecuteScalarAsync<int?>(
+                                    "SELECT TOP 1 Id FROM dbo.Profile WHERE REPLACE(REPLACE(REPLACE(Phone, ' ', ''), '-', ''), '+', '') = @Phone OR REPLACE(REPLACE(REPLACE(WhatsappNumber, ' ', ''), '-', ''), '+', '') = @Phone",
+                                    new SqlParameter("@Phone", System.Data.SqlDbType.NVarChar, 50) { Value = norm }
+                                );
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"PopulatePreviousTestsAsync fallback lookup failed: {ex}");
+                            pidToUse = null;
+                        }
+                    }
+
+                    if (pidToUse.HasValue)
+                    {
+                        var rows = await Database.GetResultsForProfileAsync(pidToUse.Value);
                         foreach (var r in rows)
                         {
                             _gridPreviousTests.Rows.Add(r.ResultId, r.TimestampUtc.ToString("s"), string.Empty);
                         }
                     }
+                }
+
+                // If requested, select the latest (first) row and load its parameters
+                if (selectLatest)
+                {
+                    try
+                    {
+                        if (_gridPreviousTests.Rows.Count > 0)
+                        {
+                            _gridPreviousTests.ClearSelection();
+                            var first = _gridPreviousTests.Rows[0];
+                            first.Selected = true;
+                            _gridPreviousTests.CurrentCell = first.Cells.Count > 1 ? first.Cells[1] : first.Cells[0];
+                            // Trigger selection handler to load parameters
+                            PreviousTests_SelectionChanged(null, EventArgs.Empty);
+                        }
+                    }
+                    catch { }
                 }
             }
             catch { }
